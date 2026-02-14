@@ -20,7 +20,7 @@ const onSubmit = async () => {
 
   try {
     // 调用后端 TP5 接口
-    const res = await axios.post('http://localhost:8000/api/user/login', form)
+    const res = await axios.post('https://tp5-5wz8.onrender.com/api/user/login', form)
 
     if (res.data.code === 200) {
       // 3. 存储 Token (这里的 res.data.data.token 是你后端返回的)
