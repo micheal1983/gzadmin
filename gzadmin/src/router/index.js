@@ -1,20 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/home.vue'
-import Test from "../views/test.vue";
-import Login from "../views/login.vue";
+import Login from '../views/Login.vue'
+import Home from '../views/Home.vue'
 
 const routes = [
-    { path: '/', name: 'Home', component: Home },
-    { path: '/test', name: 'Test', component: Test },
-    { path: '/login', name: 'Login', component: Login },
+    { path: '/', redirect: '/login' },
+    { path: '/login', component: Login },
+    { path: '/home', component: Home }
 ]
 
 const router = createRouter({
-    history: createWebHistory('/gzadmin/'),
-    routes,
-    scrollBehavior(to, from, savedPosition) {
-        // 总是滚动到顶部
-        return { top: 0 }
+    history: createWebHistory(),
+    routes
+})
+
+// src/router/index.js
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token')
+
+    // 如果访问的不是登录页，且没有 token，则强制跳转登录
+    if (to.path !== '/login' && !token) {
+        next('/login')
+    } else {
+        next() // 否则放行
     }
 })
 
