@@ -6,7 +6,7 @@ import Tab_navigation from "../components/tab_navigation.vue";
 </script>
 
 <template>
-  This is home!
+  This is home!!
   <tab_navigation />
 </template>
 
