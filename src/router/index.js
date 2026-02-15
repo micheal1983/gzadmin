@@ -1,28 +1,64 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/login.vue'
-import Home from '../views/home.vue'
+import { createRouter, createWebHistory } from 'vue-router';
 
 const routes = [
-    { path: '/', redirect: '/login' },
-    { path: '/login', component: Login },
-    { path: '/home', component: Home }
-]
+    {
+        path: '/login',
+        name: 'Login',
+        component: () => import('../views/Login.vue')
+    },
+    {
+        path: '/',
+        component: () => import('../layouts/MainLayout.vue'), // 布局架子
+        redirect: '/home',
+        children: [
+            {
+                path: 'home',
+                name: 'Home',
+                component: () => import('../views/Home.vue') // 默认进入的内容页
+            },
+            // --- 游戏管理 ---
+            {
+                path: 'game-add',
+                name: 'GameAdd',
+                component: () => import('../views/game/GameAdd.vue') // 建议按文件夹分类
+            },
+            {
+                path: 'game-list',
+                name: 'GameList',
+                component: () => import('../views/game/GameList.vue')
+            },
+            // --- 文章管理 ---
+            {
+                path: 'article-add',
+                name: 'ArticleAdd',
+                component: () => import('../views/article/ArticleAdd.vue')
+            },
+            {
+                path: 'article-list',
+                name: 'ArticleList',
+                component: () => import('../views/article/ArticleList.vue')
+            },
+        ]
+    }
+];
 
 const router = createRouter({
     history: createWebHistory(),
     routes
-})
+});
 
-// src/router/index.js
+// --- 路由守卫逻辑 ---
+// router/index.js
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token'); // 确保这里的 key 和 login 存的一致
 
-    // 如果访问的不是登录页，且没有 token，则强制跳转登录
-    if (to.path !== '/login' && !token) {
-        next('/login')
+    if (to.path === '/login') {
+        next(); // 如果是去登录页，必须直接放行，否则会死循环
+    } else if (!token) {
+        next('/login'); // 没 Token 且不是去登录页，踢回登录
     } else {
-        next() // 否则放行
+        next(); // 有 Token，正常放行
     }
-})
+});
 
-export default router
+export default router;

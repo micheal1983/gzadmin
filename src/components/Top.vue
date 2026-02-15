@@ -42,7 +42,7 @@ const handleLogout = () => {
 <template>
   <div v-if="userInfo">
     欢迎回来，{{ userInfo.username }} (ID: {{ userInfo.uid }})
-    [<span class="logout-text" @click="handleLogout">退出登录</span>]
+    [<span class="link" @click="handleLogout">退出登录</span>]
   </div>
   <div v-else>
     正在加载用户信息...
@@ -50,13 +50,5 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
-.logout-text {
-  cursor: pointer;    /* 鼠标变成小手 */
-  color: #409eff;     /* 给个颜色（比如蓝色） */
-}
 
-.logout-text:hover {
-  color: #66b1ff;     /* 悬停时变浅，增加交互感 */
-  text-decoration: underline; /* 悬停时加下划线 */
-}
 </style>
