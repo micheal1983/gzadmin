@@ -16,6 +16,13 @@ const routes = [
                 name: 'Home',
                 component: () => import('../views/Home.vue') // 默认进入的内容页
             },
+            // === 新增：频道管理路由 ===
+            {
+                path: 'channel-list',
+                name: 'ChannelList',
+                component: () => import('../views/channel/ChannelList.vue')
+            },
+            // === 新增结束 ===
             // --- 游戏管理 ---
             {
                 path: 'game-add',
@@ -31,7 +38,12 @@ const routes = [
             {
                 path: 'article-add',
                 name: 'ArticleAdd',
-                component: () => import('../views/article/ArticleAdd.vue')
+                component: () => import('../views/article/ArticleForm.vue')
+            },
+            {
+                path: 'article-edit/:id', // 动态路由传参
+                name: 'ArticleEdit',
+                component: () => import('../views/article/ArticleForm.vue')
             },
             {
                 path: 'article-list',

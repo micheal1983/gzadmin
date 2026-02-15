@@ -32,15 +32,13 @@
       </li>
     </ul>
 
-<!--    <ul class="module">-->
-<!--      <li class="item title">图片管理</li>-->
-<!--      <li>-->
-<!--        <router-link to="/image-add" class="item link" active-class="is-active">添加图片</router-link>-->
-<!--      </li>-->
-<!--      <li>-->
-<!--        <router-link to="/image-list" class="item link" active-class="is-active">图片列表</router-link>-->
-<!--      </li>-->
-<!--    </ul>-->
+    <ul class="module">
+      <li class="item title">频道管理</li>
+      <li>
+        <router-link to="/channel-list" class="item link" active-class="is-active">频道列表</router-link>
+      </li>
+    </ul>
+
   </section>
 </template>
 

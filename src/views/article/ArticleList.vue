@@ -63,11 +63,13 @@ const deleteArticle = (id) => {
       <tbody>
       <tr v-for="item in articles" :key="item.id">
         <td>{{ item.id }}</td>
-        <td>{{ item.title }}</td>
+        <td>{{ item.name }}</td>
         <td>{{ item.author }}</td>
         <td>{{ item.create_time }}</td>
         <td>
-          <button class="btn-edit">编辑</button>
+          <button @click="$router.push({ name: 'ArticleEdit', params: { id: item.id } })">
+            编辑
+          </button>
           <button class="btn-delete" @click="deleteArticle(item.id)">删除</button>
         </td>
       </tr>
