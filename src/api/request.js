@@ -3,8 +3,8 @@ import axios from 'axios'
 // 1. 创建实例
 const service = axios.create({
     // 以后换服务器，只需要改这里！
-    baseURL: 'https://tp5-5wz8.onrender.com/api',
-    //baseURL: 'http://localhost:8000/api/',
+    //baseURL: 'https://tp5-5wz8.onrender.com/api',
+    baseURL: 'http://localhost:8000/api/',
     timeout: 5000 // 请求超时时间
 })
 

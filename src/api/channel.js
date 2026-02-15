@@ -21,15 +21,16 @@ export const channelApi = {
     },
     // 修改频道
     update(id, data) {
-        return request.post(`/channels/mif?id=${id}`, {
+        return request.post(`/channel/mif?id=${id}`, {
             name: data.name,
             model_id: data.model_id,
             remark: data.remark,
+            status: 1,
             update_time: Math.floor(Date.now() / 1000)
         })
     },
     // 删除频道
     delete(id) {
-        return request.get(`/channels/del?id=${id}`)
+        return request.get(`/channel/del?id=${id}`)
     }
 }
