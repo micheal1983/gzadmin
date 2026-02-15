@@ -3,5 +3,11 @@
   "compatibility_date": "2026-02-14",
   "assets": {
     "directory": "./dist"
-  }
+  },
+  "r2_buckets": [
+    {
+      "binding": "MY_BUCKET",
+      "bucket_name": "gzwebp"
+    }
+  ]
 }
