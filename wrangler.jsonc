@@ -1,9 +1,7 @@
 {
   "name": "gzadmin",
   "compatibility_date": "2026-02-14",
-  "assets": {
-    "directory": "./dist"
-  },
+  "pages_build_output_dir": "./dist",
   "r2_buckets": [
     {
       "binding": "MY_BUCKET",
