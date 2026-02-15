@@ -2,6 +2,7 @@
 import Left from "../components/Left.vue";
 import Top from "../components/Top.vue";
 import Right from "../components/Right.vue"; // 这里的 Right 建议作为内容容器
+console.log(localStorage.getItem("token"));
 </script>
 
 <template>
