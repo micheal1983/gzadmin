@@ -3,6 +3,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { articleApi } from '../../api/article'
 import { channelApi } from '../../api/channel'
+// 引入通用上传组件
+import CommonUpload from '../../components/UploadImage.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,7 +17,7 @@ const form = ref({
   channel_id: 1,
   author: 'Admin',
   content: '',
-  cover: '',
+  cover: '', // 这里将存储 R2 返回的文件名
   status: 1
 })
 
@@ -31,13 +33,11 @@ const initData = async () => {
       const res = await articleApi.getDetail(articleId)
       if (res && res.code === 200) {
         const data = res.data
-        console.log("数据库数据："+data.info)
         let infoObj = { author: 'Admin', content: '', cover: '' }
         try {
           if (data.info) {
             // 解析数据库中的 JSON 字符串
             infoObj = typeof data.info === 'string' ? JSON.parse(data.info) : data.info
-            console.log("解析后的info对象：", infoObj)
           }
         } catch (e) {
           infoObj.content = data.info || ''
@@ -48,9 +48,8 @@ const initData = async () => {
           channel_id: data.channel_id,
           author: infoObj.author || 'Admin',
           content: infoObj.content || '',
-          cover: infoObj.cover || '',
-          // 修复回显：确保 status 是数字类型，否则 radio 无法选中
-          status: Number(data.status)
+          cover: infoObj.cover || '', // 编辑状态回显图片路径
+          status: Number(data.status) // 确保 radio 选中
         }
       }
     }
@@ -65,19 +64,18 @@ const onSubmit = async () => {
   if (!form.value.title) return alert('标题不能为空')
 
   try {
-    // 1. 在组件内部打包好完整的 info 字段
+    // 1. 将封面路径连同其他信息打包成 JSON 字符串
     const infoJson = JSON.stringify({
       author: form.value.author,
       content: form.value.content,
       cover: form.value.cover
     })
 
-    // 2. 构造符合 API 预期的 data 对象
     const submitData = {
       title: form.value.title,
       status: form.value.status,
       channel_id: form.value.channel_id,
-      info: infoJson // 传打包好的字符串
+      info: infoJson
     }
 
     let res;
@@ -87,11 +85,12 @@ const onSubmit = async () => {
       res = await articleApi.add(submitData)
     }
 
-    if (res.code === 200 || (res.msg && res.msg.includes('完成'))) {
+    // 后端已修正返回 code: 200
+    if (res.code === 200 || (res.msg && res.msg.includes('成功'))) {
       alert('保存成功')
       await router.push({name: 'ArticleList'})
     } else {
-      alert('保存失败: ' + res.msg)
+      alert('保存失败: ' + (res.msg || '未知错误'))
     }
   } catch (err) {
     alert('请求异常')
@@ -113,7 +112,7 @@ onMounted(initData)
     <div v-else class="form-container">
       <div class="form-item">
         <label>文章标题:</label>
-        <input v-model="form.title" />
+        <input v-model="form.title" placeholder="请输入标题" />
       </div>
 
       <div class="form-row">
@@ -121,15 +120,16 @@ onMounted(initData)
           <label>作者:</label>
           <input v-model="form.author" />
         </div>
-        <div class="form-item flex-2">
-          <label>封面图片 URL:</label>
-          <input v-model="form.cover" />
+        <div class="form-item flex-1">
+          <label>文章封面图:</label>
+          <CommonUpload v-model="form.cover" />
+          <p class="hint">支持上传到 Cloudflare R2</p>
         </div>
       </div>
 
       <div class="form-item">
         <label>正文内容:</label>
-        <textarea v-model="form.content" rows="15"></textarea>
+        <textarea v-model="form.content" rows="15" placeholder="支持 HTML 或纯文本"></textarea>
       </div>
 
       <div class="form-item">
@@ -141,21 +141,24 @@ onMounted(initData)
       </div>
 
       <div class="footer">
-        <button class="btn-save" @click="onSubmit">提交保存</button>
+        <button class="btn-save" @click="onSubmit">提交保存文章</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.article-form { padding: 20px; max-width: 800px; margin: 0 auto; background: #fff; }
-.header { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.form-item { margin-bottom: 15px; display: flex; flex-direction: column; }
-.form-item label { font-weight: bold; margin-bottom: 5px; }
-.form-item input, .form-item textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-.form-row { display: flex; gap: 20px; }
+/* 保持原有样式并微调 */
+.article-form { padding: 20px; max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; }
+.header { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.form-item { margin-bottom: 20px; display: flex; flex-direction: column; }
+.form-item label { font-weight: bold; margin-bottom: 8px; color: #333; }
+.form-item input, .form-item textarea { padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+.form-row { display: flex; gap: 30px; }
 .flex-1 { flex: 1; }
-.flex-2 { flex: 2; }
-.radio-group { display: flex; gap: 20px; padding: 10px 0; }
-.btn-save { padding: 10px 40px; background: #535bf2; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.radio-group { display: flex; gap: 30px; padding: 10px 0; }
+.footer { margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+.btn-save { padding: 12px 60px; background: #535bf2; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+.btn-save:hover { background: #4349d8; }
+.hint { font-size: 12px; color: #999; margin-top: 5px; }
 </style>
