@@ -35,7 +35,8 @@ const fileInput = ref(null)
 const loading = ref(false)
 
 // R2 公网访问前缀 (请根据你的 R2 设置修改)
-const R2_DOMAIN = 'https://pub-2c62c63b2d3a4a479a367f3d7d3eadf6.r2.dev'
+//const R2_DOMAIN = 'https://pub-2c62c63b2d3a4a479a367f3d7d3eadf6.r2.dev'
+const R2_DOMAIN = 'https://image.digidiving.com'
 
 const fullUrl = computed(() => {
   if (!props.modelValue) return ''
