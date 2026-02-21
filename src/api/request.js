@@ -1,10 +1,11 @@
 import axios from 'axios'
+// 引入我们在 format.js 中集中管理的 API 地址
+import { API_BASE_URL } from '../utils/format'
 
 // 1. 创建实例
 const service = axios.create({
-    // 以后换服务器，只需要改这里！
-    baseURL: 'https://tp5-5wz8.onrender.com/api',
-    //baseURL: 'http://localhost:8000/api/',
+    // 动态使用统一配置的域名！
+    baseURL: API_BASE_URL,
     timeout: 5000 // 请求超时时间
 })
 

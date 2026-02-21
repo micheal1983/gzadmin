@@ -25,23 +25,19 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+// 引入刚刚写好的公共函数
+import { getFullUrl } from '../utils/format'
 
 const props = defineProps({
-  modelValue: String // 接收文章 form.cover
+  modelValue: String
 })
 
 const emit = defineEmits(['update:modelValue'])
 const fileInput = ref(null)
 const loading = ref(false)
 
-// R2 公网访问前缀 (请根据你的 R2 设置修改)
-//const R2_DOMAIN = 'https://pub-2c62c63b2d3a4a479a367f3d7d3eadf6.r2.dev'
-const R2_DOMAIN = 'https://image.digidiving.com'
-
-const fullUrl = computed(() => {
-  if (!props.modelValue) return ''
-  return props.modelValue.startsWith('http') ? props.modelValue : `${R2_DOMAIN}/${props.modelValue}`
-})
+// 直接调用公共函数生成回显地址
+const fullUrl = computed(() => getFullUrl(props.modelValue))
 
 const triggerSelect = () => {
   if (!loading.value) fileInput.value.click()
@@ -56,7 +52,6 @@ const onFileChange = async (e) => {
   formData.append('file', file)
 
   try {
-    // 这里的路径必须与 functions/api/upload.js 对应
     const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData
@@ -68,7 +63,6 @@ const onFileChange = async (e) => {
 
     const data = await res.json()
     if (data.success) {
-      // 这里的 data.fileName 是 R2 保存后的名字
       emit('update:modelValue', data.fileName)
     } else {
       alert('上传失败: ' + data.error)
@@ -77,7 +71,7 @@ const onFileChange = async (e) => {
     alert(err.message || '上传异常')
   } finally {
     loading.value = false
-    e.target.value = '' // 清重置 input
+    e.target.value = ''
   }
 }
 </script>
