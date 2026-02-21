@@ -1,50 +1,272 @@
 <script setup>
-import { reactive } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+// 🌟 引入我们之前定义的 API 地址配置
+import { API_BASE_URL } from '../utils/format'
 
 const router = useRouter()
+const loading = ref(false) // 登录状态锁定
+const message = ref({ type: '', text: '' }) // 提示信息区域
 
-// 1. 使用 reactive 定义表单数据
 const form = reactive({
   username: '',
   password: ''
 })
 
-// 2. 点击提交事件
 const onSubmit = async () => {
+  if (loading.value) return // 防止重复点击
+
   if (!form.username || !form.password) {
-    alert('请填写完整信息')
+    message.value = { type: 'error', text: '请填写完整的账号和密码' }
     return
   }
 
+  loading.value = true
+  message.value = { type: 'info', text: '正在验证身份，请稍候...' }
+
   try {
-    // 调用后端 TP5 接口
-    const res = await axios.post('https://tp5-5wz8.onrender.com/api/user/login', form)
+    // 使用统一的 API 地址
+    const res = await axios.post(`${API_BASE_URL}user/login`, form)
 
     if (res.data.code === 200) {
-      // 3. 存储 Token (这里的 res.data.data.token 是你后端返回的)
       localStorage.setItem('token', res.data.data.token)
+      localStorage.setItem('username', form.username) // 存储用户名供后台显示
 
-      alert('登录成功！')
+      message.value = {type: 'success', text: '登录成功！正在进入系统...'}
 
-      // 4. 跳转到首页
-      router.push('/home')
+      // 🌟 成功后延迟 1 秒跳转，让用户看清成功提示
+      setTimeout(() => {
+        router.push('/home')
+      }, 1000)
     } else {
-      alert(res.data.msg || '登录失败')
+      loading.value = false
+      message.value = {type: 'error', text: res.data.msg || '登录失败，请检查账号密码'}
     }
   } catch (error) {
-    console.error('请求出错:', error)
-    alert('服务器响应错误')
+    loading.value = false
+    message.value = {type: 'error', text: '服务器响应异常，请联系管理员'}
   }
 }
 </script>
 
 <template>
-  <div class="login-box">
-    <h2>系统登录</h2>
-    <input v-model="form.username" type="text" placeholder="请输入用户名" />
-    <input v-model="form.password" type="password" placeholder="请输入密码" @keyup.enter="onSubmit" />
-    <button @click="onSubmit">登录</button>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo">
+          <span class="material-icons">security</span>
+        </div>
+        <h2>GAMEZONE</h2>
+        <p>系统管理后台</p>
+      </div>
+
+      <div v-if="message.text" :class="['message-box', message.type]">
+        <span class="material-icons">{{ message.type === 'error' ? 'report' : 'info' }}</span>
+        {{ message.text }}
+      </div>
+
+      <div class="login-form">
+        <div class="input-group">
+          <span class="material-icons">person</span>
+          <input
+              v-model="form.username"
+              type="text"
+              placeholder="用户名"
+              :disabled="loading"
+          />
+        </div>
+
+        <div class="input-group">
+          <span class="material-icons">lock</span>
+          <input
+              v-model="form.password"
+              type="password"
+              placeholder="密码"
+              :disabled="loading"
+              @keyup.enter="onSubmit"
+          />
+        </div>
+
+        <button
+            class="btn-login"
+            @click="onSubmit"
+            :disabled="loading"
+        >
+          <template v-if="!loading">登录系统</template>
+          <template v-else>
+            <span class="spinner"></span>
+            验证中...
+          </template>
+        </button>
+      </div>
+
+      <div class="login-footer">
+        © 2026 GameZone CMS. All Rights Reserved.
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.login-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f2f5;
+  background-image: radial-gradient(#535bf2 0.5px, #f0f2f5 0.5px); /* 点状背景纹理 */
+  background-size: 20px 20px;
+}
+
+.login-card {
+  width: 400px;
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.login-header {
+  margin-bottom: 30px;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  background: #535bf2;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 15px;
+}
+
+.logo .material-icons {
+  font-size: 32px;
+}
+
+.login-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1e1e2d;
+  letter-spacing: 2px;
+}
+
+.login-header p {
+  margin: 5px 0 0;
+  color: #a2a3b7;
+  font-size: 14px;
+}
+
+/* 🌟 信息提示框样式 */
+.message-box {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.message-box.info {
+  background: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.message-box.error {
+  background: #fff1f0;
+  color: #f5222d;
+  border: 1px solid #ffa39e;
+}
+
+.message-box.success {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-group .material-icons {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a2a3b7;
+  font-size: 20px;
+}
+
+.input-group input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 12px 12px 42px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #535bf2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(83, 91, 242, 0.1);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: #535bf2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s;
+}
+
+.btn-login:hover {
+  background: #4349d8;
+}
+
+.btn-login:disabled {
+  background: #bababa;
+  cursor: not-allowed;
+}
+
+/* 🌟 加载圆圈动画 */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-footer {
+  margin-top: 40px;
+  font-size: 12px;
+  color: #bfbfbf;
+}
+</style>

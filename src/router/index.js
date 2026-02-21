@@ -27,7 +27,12 @@ const routes = [
             {
                 path: 'game-add',
                 name: 'GameAdd',
-                component: () => import('../views/game/GameAdd.vue') // 建议按文件夹分类
+                component: () => import('../views/game/GameForm.vue')
+            },
+            {
+                path: 'game-edit/:id', // 动态路由传参
+                name: 'GameEdit',
+                component: () => import('../views/game/GameForm.vue')
             },
             {
                 path: 'game-list',
