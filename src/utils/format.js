@@ -1,6 +1,6 @@
 // 1. 配置 API 请求的服务器地址 (以后本地开发和线上部署，只需在这里切换注释)
-//export const API_BASE_URL = 'https://tp5-5wz8.onrender.com/api/'
-export const API_BASE_URL = 'http://localhost:8000/api/'
+export const API_BASE_URL = 'https://tp5-5wz8.onrender.com/api/'
+//export const API_BASE_URL = 'http://localhost:8000/api/'
 
 export const R2_DOMAIN = 'https://image.digidiving.com'
 
