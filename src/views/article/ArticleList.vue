@@ -6,7 +6,7 @@ import { channelApi } from '../../api/channel'
 import { getFullUrl } from '../../utils/format'
 
 const router = useRouter()
-const MODEL_ID = 1 // 🌟 修复: 保持和表单一致，文章模型ID通常是1 (你在表单里改成了1)
+const MODEL_ID = 2 // 🌟 修复: 保持和表单一致，文章模型ID通常是1 (你在表单里改成了1)
 
 const articles = ref([])
 const loading = ref(true)

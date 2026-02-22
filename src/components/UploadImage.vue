@@ -60,10 +60,10 @@ const onFileChange = async (e) => {
   formData.append('model', props.modelName)
   formData.append('channel', props.channelName)
 
-  //真实上传地址：https://tp5-5wz8.onrender.com/api/uploadd
+  //真实上传地址：https://gzadmin.pages.dev/api/uploadd
   //相对地址：/api/uploadd
   try {
-    const res = await fetch('https://tp5-5wz8.onrender.com/api/uploadd', {
+    const res = await fetch('https://gzadmin.pages.dev/api/uploadd', {
       method: 'POST',
       body: formData
     })
