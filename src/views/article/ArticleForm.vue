@@ -17,7 +17,7 @@ const loading = ref(false)
 const articleId = route.params.id
 const isEdit = computed(() => !!articleId)
 
-const MODEL_ID = 2 // 🌟 修复: 文章模型 ID 通常是 2
+const MODEL_ID = 2 // 🌟 修复: 文章模型 ID 通常是 2asdfasdfas
 
 // === WangEditor 实例与配置 ===
 const editorRef = shallowRef()
