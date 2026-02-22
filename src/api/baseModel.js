@@ -29,3 +29,4 @@ export class BaseModelApi {
 // 统一导出
 export const articleApi = new BaseModelApi('article')
 export const gameApi = new BaseModelApi('game')
+export const pictureApi = new BaseModelApi('picture')

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { articleApi } from '../../api/article'
+import { articleApi } from '../../api/baseModel.js'
 import { channelApi } from '../../api/channel'
 import { getFullUrl } from '../../utils/format'
 

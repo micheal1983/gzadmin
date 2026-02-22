@@ -48,6 +48,22 @@
       </ul>
 
       <ul class="module">
+        <li class="item title">图片库管理</li>
+        <li>
+          <router-link to="/picture-add" class="item link" active-class="is-active">
+            <span class="material-icons">add_photo_alternate</span>
+            <span class="text">上传图片</span>
+          </router-link>
+        </li>
+        <li>
+          <router-link to="/picture-list" class="item link" active-class="is-active">
+            <span class="material-icons">photo_library</span>
+            <span class="text">图片列表</span>
+          </router-link>
+        </li>
+      </ul>
+
+      <ul class="module">
         <li class="item title">频道配置</li>
         <li>
           <router-link to="/channel-list" class="item link" active-class="is-active">

@@ -55,6 +55,22 @@ const routes = [
                 name: 'ArticleList',
                 component: () => import('../views/article/ArticleList.vue')
             },
+            // 图片管理
+            {
+                path: '/picture-list',
+                name: 'PictureList',
+                component: () => import('../views/picture/PictureList.vue')
+            },
+            {
+                path: '/picture-add',
+                name: 'PictureAdd',
+                component: () => import('../views/picture/PictureForm.vue')
+            },
+            {
+                path: '/picture-edit/:id',
+                name: 'PictureEdit',
+                component: () => import('../views/picture/PictureForm.vue')
+            }
         ]
     }
 ];

@@ -1,61 +1,34 @@
 <script setup>
-import {ref, onMounted, computed, shallowRef, onBeforeUnmount} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import {articleApi} from '../../api/baseModel.js'
-import {channelApi} from '../../api/channel'
-// 引入升级后的通用上传组件
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { pictureApi } from '../../api/baseModel.js'
+import { channelApi } from '../../api/channel'
 import CommonUpload from '../../components/UploadImage.vue'
-import {getFullUrl} from '../../utils/format'
-
-// --- 引入 WangEditor 富文本 ---
-import '@wangeditor/editor/dist/css/style.css'
-import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
+import { getFullUrl } from '../../utils/format'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
-const articleId = route.params.id
-const isEdit = computed(() => !!articleId)
+const currentId = route.params.id
+const isEdit = computed(() => !!currentId)
 
-const MODEL_ID = 1 // 🌟 修复: 文章模型 ID 通常是 1
-
-// === WangEditor 实例与配置 ===
-const editorRef = shallowRef()
-const toolbarConfig = {
-  excludeKeys: [
-    'uploadImage',
-    'uploadVideo',
-  ]
-}
-const editorConfig = {placeholder: '请输入正文内容...'}
-
-onBeforeUnmount(() => {
-  const editor = editorRef.value
-  if (editor == null) return
-  editor.destroy()
-})
-
-const handleCreated = (editor) => {
-  editorRef.value = editor
-}
-// =============================
+const MODEL_ID = 4 // 🌟 修复: 图片库的模型 ID 是 4
 
 const form = ref({
   title: '',
   channel_id: '',
-  author: '',
-  content: '',
-  cover: '',
+  cover: '', // 图片路径
+  url: '',   // (可选) 点击图片要跳转的外链
   status: 1
 })
 
 const channels = ref([])
 
-// 🌟 新增：计算当前选中的频道英文名，用于动态拼接图片预览路径
+// 计算当前选中的频道英文名，用于动态拼接图片预览路径
 const currentChannelName = computed(() => {
-  if (!channels.value.length || !form.value.channel_id) return 'news'
+  if (!channels.value.length || !form.value.channel_id) return 'gallery'
   const ch = channels.value.find(c => c.id === form.value.channel_id)
-  return ch ? ch.name : 'news'
+  return ch ? ch.name : 'gallery'
 })
 
 const initData = async () => {
@@ -69,13 +42,11 @@ const initData = async () => {
       }
     }
 
-    if (!isEdit.value) {
-      form.value.author = localStorage.getItem('username') || 'Admin'
-    } else {
-      const res = await articleApi.getDetail(articleId)
+    if (isEdit.value) {
+      const res = await pictureApi.getDetail(currentId)
       if (res && res.code === 200) {
         const data = res.data
-        let infoObj = {author: 'Admin', content: '', cover: ''}
+        let infoObj = { cover: '', url: '' }
 
         try {
           if (data.info) {
@@ -84,15 +55,14 @@ const initData = async () => {
             infoObj = parsed
           }
         } catch (e) {
-          infoObj.content = data.info || ''
+          console.error('解析 info 失败', e)
         }
 
         form.value = {
-          title: data.name, // 后端叫 name，前端表单叫 title
+          title: data.name, // 后端叫 name，表单绑定的叫 title
           channel_id: data.channel_id,
-          author: infoObj.author || 'Admin',
-          content: infoObj.content || '',
           cover: infoObj.cover || '',
+          url: infoObj.url || '',
           status: Number(data.status)
         }
       }
@@ -105,19 +75,17 @@ const initData = async () => {
 }
 
 const onSubmit = async () => {
-  if (!form.value.title.trim()) return alert('文章标题不能为空')
-  if (!form.value.channel_id) return alert('请选择所属栏目')
-  if (!form.value.content) return alert('正文内容不能为空')
+  if (!form.value.title.trim()) return alert('图片标题不能为空')
+  if (!form.value.channel_id) return alert('请选择所属图集')
+  if (!form.value.cover) return alert('请上传图片文件')
 
   try {
-    // 组装 info 字段
+    // 组装 info 字段 (图片库通常只需要封面和链接)
     const infoJson = JSON.stringify({
-      author: form.value.author,
-      content: form.value.content,
-      cover: form.value.cover
+      cover: form.value.cover,
+      url: form.value.url
     })
 
-    // 🌟 修复：必须传 name 给后端，而不是 title
     const submitData = {
       name: form.value.title,
       status: form.value.status,
@@ -127,12 +95,11 @@ const onSubmit = async () => {
 
     let res;
     if (isEdit.value) {
-      res = await articleApi.update(articleId, submitData)
+      res = await pictureApi.update(currentId, submitData)
     } else {
-      res = await articleApi.add(submitData)
+      res = await pictureApi.add(submitData)
     }
 
-    // 🌟 修复：将判断逻辑放入 try 块内，确保正确捕获返回结果
     if (res.code === 200) {
       alert(isEdit.value ? '修改成功' : '添加成功')
       router.back()
@@ -149,9 +116,9 @@ onMounted(initData)
 </script>
 
 <template>
-  <div class="article-form">
+  <div class="picture-form">
     <div class="header">
-      <h2>{{ isEdit ? '编辑文章' : '新增文章' }}</h2>
+      <h2>{{ isEdit ? '编辑图片' : '上传新图' }}</h2>
       <button class="btn-back" @click="router.back()">返回列表</button>
     </div>
 
@@ -160,52 +127,40 @@ onMounted(initData)
     <div v-else class="form-container">
 
       <div class="form-item">
-        <label>文章标题 <span class="required">*</span></label>
+        <label>图片标题 <span class="required">*</span></label>
         <div class="form-content">
-          <input v-model="form.title" type="text" placeholder="请输入文章标题"/>
+          <input v-model="form.title" type="text" placeholder="例如：2026年首页轮播图-1"/>
         </div>
       </div>
 
       <div class="form-item">
-        <label>所属栏目 <span class="required">*</span></label>
+        <label>所属图集分类 <span class="required">*</span></label>
         <div class="form-content">
           <select v-model="form.channel_id" class="form-select">
-            <option disabled value="">请选择栏目</option>
+            <option disabled value="">请选择图集</option>
             <option v-for="c in channels" :key="c.id" :value="c.id">{{ c.remark }} ({{ c.name }})</option>
           </select>
         </div>
       </div>
 
       <div class="form-item">
-        <label>文章封面 (建议横版 2:1)</label>
-        <div class="form-content">
+        <label>高清图片 <span class="required">*</span></label>
+        <div class="form-content upload-container">
           <CommonUpload
               v-model="form.cover"
-              modelName="article"
+              modelName="picture"
               :channelName="currentChannelName"
-              :previewUrl="getFullUrl(form.cover, 'article', currentChannelName)"
+              :previewUrl="getFullUrl(form.cover, 'picture', currentChannelName)"
           />
-          <div class="hint">支持自动分类上传到 Cloudflare R2 (article/{{ currentChannelName }}/)</div>
+          <div class="hint">支持自动分类上传到 Cloudflare R2 (picture/{{ currentChannelName }}/)</div>
         </div>
       </div>
 
       <div class="form-item">
-        <label>正文内容 <span class="required">*</span></label>
-        <div class="form-content editor-container">
-          <Toolbar
-              class="editor-toolbar"
-              :editor="editorRef"
-              :defaultConfig="toolbarConfig"
-              mode="default"
-          />
-          <Editor
-              class="editor-content"
-              style="height: 500px; overflow-y: hidden;"
-              v-model="form.content"
-              :defaultConfig="editorConfig"
-              mode="default"
-              @onCreated="handleCreated"
-          />
+        <label>点击跳转链接 (可选)</label>
+        <div class="form-content">
+          <input v-model="form.url" type="text" placeholder="例如: https://example.com"/>
+          <div class="hint">如果图片用于前端轮播展示，用户点击图片时跳转的网址</div>
         </div>
       </div>
 
@@ -229,10 +184,9 @@ onMounted(initData)
 </template>
 
 <style scoped>
-/* 这里完全保留了你原有的精美样式设计，未作删减 */
-.article-form {
+.picture-form {
   padding: 30px;
-  max-width: 1000px;
+  max-width: 800px;
   margin: 0 auto;
   background: #fff;
   border-radius: 8px;
@@ -293,7 +247,7 @@ onMounted(initData)
   margin-left: 2px;
 }
 
-.form-content input[type="text"], .form-content input:not([type]), .form-select {
+.form-content input[type="text"], .form-select {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 14px;
@@ -311,29 +265,11 @@ onMounted(initData)
   box-shadow: 0 0 0 2px rgba(83, 91, 242, 0.1);
 }
 
-.form-select {
-  cursor: pointer;
-}
-
-.form-select option {
-  color: #333;
-}
-
-.editor-container {
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  overflow: hidden;
-  z-index: 100;
-}
-
-.editor-toolbar {
-  border-bottom: 1px solid #d9d9d9;
-  background-color: #fafafa;
-}
-
-.editor-content {
-  background-color: #ffffff;
-  text-align: left;
+/* 🌟 专门给图片库放大一下上传框的样式 */
+.upload-container :deep(.upload-area) {
+  width: 260px !important;
+  height: 146px !important; /* 近似 16:9 */
+  background: #fafafa;
 }
 
 .radio-group {

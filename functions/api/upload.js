@@ -40,7 +40,11 @@ export async function onRequestPost(context) {
             fileName: fileName,
             message: "上传成功"
         }), {
-            headers: { "Content-Type": "application/json" }
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*", // 🌟 允许跨域请求
+                "Access-Control-Allow-Methods": "POST, OPTIONS"
+            }
         });
 
     } catch (err) {
