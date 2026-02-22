@@ -60,27 +60,42 @@ const onFileChange = async (e) => {
   formData.append('model', props.modelName)
   formData.append('channel', props.channelName)
 
-  //真实上传地址：https://gzadmin.pages.dev/api/uploadd
+  //真实上传地址：https://gzadmin.pages.dev/api/upload
   //相对地址：/api/uploadd
   try {
-    const res = await fetch('https://gzadmin.pages.dev/api/uploadd', {
+    const res = await fetch('https://gzadmin.pages.dev/api/upload', { // 确认这里是你正确的请求地址
       method: 'POST',
       body: formData
     })
 
+    // 🌟 排错黑科技：先作为纯文本读取，不要直接 res.json()
+    const rawText = await res.text()
+    console.log("【调试】服务器原始返回状态码:", res.status)
+    console.log("【调试】服务器原始返回内容:", rawText)
+
     if (res.status === 404) {
-      throw new Error('未找到上传接口，请检查是否使用了 wrangler 启动项目')
+      throw new Error('未找到上传接口 (404)')
     }
 
-    const data = await res.json()
+    // 尝试解析 JSON
+    let data;
+    try {
+      // 只有当有内容时才去解析
+      if (!rawText) throw new Error("服务器返回了空白内容");
+      data = JSON.parse(rawText)
+    } catch (parseErr) {
+      throw new Error(`服务器返回了非 JSON 数据 (状态码 ${res.status}): ${rawText.substring(0, 50)}...`)
+    }
+
+    // 解析成功，走正常逻辑
     if (data.success) {
-      // 成功后，仍然只把纯文件名更新给外部表单
       emit('update:modelValue', data.fileName)
     } else {
       alert('上传失败: ' + data.error)
     }
   } catch (err) {
-    alert(err.message || '上传异常')
+    alert('上传异常: ' + err.message)
+    console.error("上传完整错误:", err)
   } finally {
     loading.value = false
     e.target.value = ''
