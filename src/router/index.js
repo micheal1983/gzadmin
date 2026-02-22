@@ -16,6 +16,12 @@ const routes = [
                 name: 'Home',
                 component: () => import('../views/Home.vue') // 默认进入的内容页
             },
+            // === 🌟 新增：用户管理路由 ===
+            {
+                path: 'user-list',
+                name: 'UserList',
+                component: () => import('../views/user/UserList.vue')
+            },
             // === 新增：频道管理路由 ===
             {
                 path: 'channel-list',

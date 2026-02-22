@@ -4,18 +4,24 @@ import { ref, onMounted } from 'vue'
 import { jwtDecode } from 'jwt-decode'
 
 const userInfo = ref(null)
+const channel_id = ref(null)
 const router = useRouter()
 
 onMounted(() => {
+  console.log(localStorage.getItem('userinfo'))
+  userInfo.value = JSON.parse(localStorage.getItem('userinfo'))
+
   const token = localStorage.getItem('token')
-  if (token) {
-    try {
-      const decoded = jwtDecode(token)
-      userInfo.value = decoded.data
-    } catch (error) {
-      console.error('Token 解析失败：', error)
-    }
-  }
+  // if (token) {
+  //   try {
+  //     const decoded = jwtDecode(token)
+  //     userInfo.value = decoded.data
+  //     console.log(userInfo.value.channel_id)
+  //
+  //   } catch (error) {
+  //     console.error('Token 解析失败：', error)
+  //   }
+  // }
 })
 
 const handleLogout = () => {

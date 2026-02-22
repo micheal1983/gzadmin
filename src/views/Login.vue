@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
 // 🌟 引入我们之前定义的 API 地址配置
 import { API_BASE_URL } from '../utils/format'
 
@@ -30,12 +31,16 @@ const onSubmit = async () => {
     const res = await axios.post(`${API_BASE_URL}user/login`, form)
 
     if (res.data.code === 200) {
+      //获取token
       localStorage.setItem('token', res.data.data.token)
-      localStorage.setItem('username', form.username) // 存储用户名供后台显示
+      localStorage.setItem('username', form.username)
+
+      //解析token
+      const decoded = jwtDecode(localStorage.getItem('token'))
+      localStorage.setItem('userinfo', JSON.stringify(decoded.data))
 
       message.value = {type: 'success', text: '登录成功！正在进入系统...'}
 
-      // 🌟 成功后延迟 1 秒跳转，让用户看清成功提示
       setTimeout(() => {
         router.push('/home')
       }, 1000)
@@ -45,7 +50,15 @@ const onSubmit = async () => {
     }
   } catch (error) {
     loading.value = false
-    message.value = {type: 'error', text: '服务器响应异常，请联系管理员'}
+
+    // 🌟 核心修复：捕获 Axios 的详细错误响应
+    if (error.response && error.response.data && error.response.data.msg) {
+      // 如果后端传回了具体的 msg（例如：401 账号或密码错误），就显示后端的提示
+      message.value = {type: 'error', text: error.response.data.msg}
+    } else {
+      // 只有在真的断网、服务器宕机（没有 response 时），才显示这句兜底的话
+      message.value = {type: 'error', text: '服务器响应异常，请联系管理员'}
+    }
   }
 }
 </script>

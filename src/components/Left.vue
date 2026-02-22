@@ -1,3 +1,18 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+
+// 1. 定义一个响应式的布尔值，默认先不显示
+const isAdmin = ref(false)
+
+// 2. 每次侧边栏组件加载时，去精确抓取一次本地缓存
+onMounted(() => {
+  const cid = JSON.parse(localStorage.getItem('userinfo')).channel_id
+  console.log(cid);
+  // 判断：如果 channel_id 等于字符串 '1'，就给管理员权限
+  isAdmin.value = (cid === 1)
+})
+</script>
+
 <template>
   <section class="left-container">
     <div class="brand">
@@ -72,6 +87,20 @@
           </router-link>
         </li>
       </ul>
+
+
+
+      <ul class="module" v-if="isAdmin">
+        <li class="item title">系统管理</li>
+        <li>
+          <router-link to="/user-list" class="item link" active-class="is-active">
+            <span class="material-icons">manage_accounts</span>
+            <span class="text">用户与权限</span>
+          </router-link>
+        </li>
+      </ul>
+
+
     </div>
   </section>
 </template>

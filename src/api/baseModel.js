@@ -30,3 +30,4 @@ export class BaseModelApi {
 export const articleApi = new BaseModelApi('article')
 export const gameApi = new BaseModelApi('game')
 export const pictureApi = new BaseModelApi('picture')
+export const userApi = new BaseModelApi('user')

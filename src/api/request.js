@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../utils/format'
 const service = axios.create({
     // 动态使用统一配置的域名！
     baseURL: API_BASE_URL,
-    timeout: 5000 // 请求超时时间
+    timeout: 10000 // 请求超时时间
 })
 
 // 2. 请求拦截器（自动注入 Token）
