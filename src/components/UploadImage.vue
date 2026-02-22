@@ -1,7 +1,7 @@
 <template>
   <div class="upload-wrapper">
     <div class="upload-area" :class="{ 'loading': loading }" @click="triggerSelect">
-      <img v-if="modelValue" :src="fullUrl" class="preview" />
+      <img v-if="modelValue" :src="previewUrl || autoFullUrl" class="preview" />
       <div v-else class="placeholder">
         <span class="icon">+</span>
         <p>{{ loading ? '上传中...' : '点击上传封面' }}</p>
@@ -29,15 +29,20 @@ import { ref, computed } from 'vue'
 import { getFullUrl } from '../utils/format'
 
 const props = defineProps({
-  modelValue: String
+  modelValue: String,
+  // 🌟 新增：接收外部组装好的预览地址 (最高优先级)
+  previewUrl: String,
+  // 🌟 新增：接收模型和频道参数，用来传给后端确定上传目录，并用于本地回显计算
+  modelName: { type: String, default: 'games' },
+  channelName: { type: String, default: 'gz' }
 })
 
 const emit = defineEmits(['update:modelValue'])
 const fileInput = ref(null)
 const loading = ref(false)
 
-// 直接调用公共函数生成回显地址
-const fullUrl = computed(() => getFullUrl(props.modelValue))
+// 🌟 内部兜底计算的完整地址，利用传进来的 model 和 channel
+const autoFullUrl = computed(() => getFullUrl(props.modelValue, props.modelName, props.channelName))
 
 const triggerSelect = () => {
   if (!loading.value) fileInput.value.click()
@@ -51,6 +56,10 @@ const onFileChange = async (e) => {
   const formData = new FormData()
   formData.append('file', file)
 
+  // 🌟 核心修改：将目录层级信息打包传给后端 R2 上传接口
+  formData.append('model', props.modelName)
+  formData.append('channel', props.channelName)
+
   try {
     const res = await fetch('/api/upload', {
       method: 'POST',
@@ -63,6 +72,7 @@ const onFileChange = async (e) => {
 
     const data = await res.json()
     if (data.success) {
+      // 成功后，仍然只把纯文件名更新给外部表单
       emit('update:modelValue', data.fileName)
     } else {
       alert('上传失败: ' + data.error)

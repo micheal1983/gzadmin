@@ -91,7 +91,7 @@ const fetchArticles = async () => {
       alert(res.msg || '获取列表失败')
     }
   } catch (error) {
-    console.error('获取文章列表出错:', error)
+    console.error('获取游戏列表出错:', error)
   } finally {
     loading.value = false
   }
@@ -155,14 +155,14 @@ onMounted(() => {
 <template>
   <div class="article-list">
     <div class="page-header">
-      <h2>文章管理</h2>
+      <h2>游戏管理</h2>
 
       <div class="header-actions">
         <input
             type="text"
             v-model="searchForm.keyword"
             class="search-input"
-            placeholder="搜索文章标题..."
+            placeholder="搜索游戏标题..."
             @keyup.enter="handleSearch"
         />
 
@@ -183,7 +183,7 @@ onMounted(() => {
 
         <button class="btn-search" @click="handleSearch">搜索</button>
         <button class="btn-reset" @click="handleReset">重置</button>
-        <button class="btn-add" @click="router.push({ name: 'ArticleAdd' })">新增文章</button>
+        <button class="btn-add" @click="router.push({ name: 'GameAdd' })">新增游戏</button>
       </div>
     </div>
 
@@ -243,7 +243,7 @@ onMounted(() => {
         </td>
       </tr>
       <tr v-if="articles.length === 0">
-        <td colspan="8" class="empty-text">未找到符合条件的文章</td>
+        <td colspan="8" class="empty-text">未找到符合条件的游戏</td>
       </tr>
       </tbody>
     </table>
