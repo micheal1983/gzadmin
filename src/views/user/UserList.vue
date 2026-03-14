@@ -11,7 +11,7 @@ import CommonUpload from '../../components/UploadImage.vue'
 const MODEL_ID = 3
 
 const list = ref([])
-const allChannels = ref([]) // 🌟 新增：保存完整的频道字典，专门用于列表回显反查
+const allChannels = ref([]) // 🌟 新增：保存完整的频道字典，专门用于列表回显反查1
 const channels = ref([])    // 仅用于表单下拉框（已过滤）
 const models = ref([])
 const loading = ref(true)
