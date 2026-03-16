@@ -1,6 +1,7 @@
 <script setup>
 import {ref, onMounted, computed, shallowRef, onBeforeUnmount} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {articleApi} from '../../api/baseModel.js'
 import {channelApi} from '../../api/channel'
 // 引入升级后的通用上传组件
@@ -11,13 +12,14 @@ import {getFullUrl} from '../../utils/format'
 import '@wangeditor/editor/dist/css/style.css'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const articleId = route.params.id
 const isEdit = computed(() => !!articleId)
 
-const MODEL_ID = 2 // 🌟 修复: 文章模型 ID 通常是 2asdfasdfas
+const MODEL_ID = 2
 
 // === WangEditor 实例与配置 ===
 const editorRef = shallowRef()
@@ -27,7 +29,7 @@ const toolbarConfig = {
     'uploadVideo',
   ]
 }
-const editorConfig = {placeholder: '请输入正文内容...'}
+const editorConfig = {placeholder: t('articleForm.contentPlaceholder')}
 
 onBeforeUnmount(() => {
   const editor = editorRef.value
@@ -98,16 +100,16 @@ const initData = async () => {
       }
     }
   } catch (err) {
-    console.error('初始化失败:', err)
+    console.error(t('articleForm.error.initFailed'), err)
   } finally {
     loading.value = false
   }
 }
 
 const onSubmit = async () => {
-  if (!form.value.title.trim()) return alert('文章标题不能为空')
-  if (!form.value.channel_id) return alert('请选择所属栏目')
-  if (!form.value.content) return alert('正文内容不能为空')
+  if (!form.value.title.trim()) return alert(t('articleForm.validation.titleRequired'))
+  if (!form.value.channel_id) return alert(t('articleForm.validation.channelRequired'))
+  if (!form.value.content) return alert(t('articleForm.validation.contentRequired'))
 
   try {
     // 组装 info 字段
@@ -117,7 +119,6 @@ const onSubmit = async () => {
       cover: form.value.cover
     })
 
-    // 🌟 修复：必须传 name 给后端，而不是 title
     const submitData = {
       name: form.value.title,
       status: form.value.status,
@@ -132,16 +133,15 @@ const onSubmit = async () => {
       res = await articleApi.add(submitData)
     }
 
-    // 🌟 修复：将判断逻辑放入 try 块内，确保正确捕获返回结果
     if (res.code === 200) {
-      alert(isEdit.value ? '修改成功' : '添加成功')
+      alert(isEdit.value ? t('articleForm.success.edit') : t('articleForm.success.add'))
       router.back()
     } else {
-      alert(res.msg || '保存失败')
+      alert(res.msg || t('articleForm.error.saveFailed'))
     }
   } catch (err) {
     console.error(err)
-    alert('请求异常，请检查网络或后端服务')
+    alert(t('articleForm.error.requestError'))
   }
 }
 
@@ -151,33 +151,33 @@ onMounted(initData)
 <template>
   <div class="article-form">
     <div class="header">
-      <h2>{{ isEdit ? '编辑文章' : '新增文章' }}</h2>
-      <button class="btn-back" @click="router.back()">返回列表</button>
+      <h2>{{ isEdit ? t('articleForm.editTitle') : t('articleForm.addTitle') }}</h2>
+      <button class="btn-back" @click="router.back()">{{ t('articleForm.back') }}</button>
     </div>
 
-    <div v-if="loading" class="loading">数据加载中...</div>
+    <div v-if="loading" class="loading">{{ t('articleForm.loading') }}</div>
 
     <div v-else class="form-container">
 
       <div class="form-item">
-        <label>文章标题 <span class="required">*</span></label>
+        <label>{{ t('articleForm.articleTitle') }} <span class="required">*</span></label>
         <div class="form-content">
-          <input v-model="form.title" type="text" placeholder="请输入文章标题"/>
+          <input v-model="form.title" type="text" :placeholder="t('articleForm.titlePlaceholder')"/>
         </div>
       </div>
 
       <div class="form-item">
-        <label>所属栏目 <span class="required">*</span></label>
+        <label>{{ t('articleForm.channel') }} <span class="required">*</span></label>
         <div class="form-content">
           <select v-model="form.channel_id" class="form-select">
-            <option disabled value="">请选择栏目</option>
+            <option disabled value="">{{ t('articleForm.selectChannel') }}</option>
             <option v-for="c in channels" :key="c.id" :value="c.id">{{ c.remark }} ({{ c.name }})</option>
           </select>
         </div>
       </div>
 
       <div class="form-item">
-        <label>文章封面 (建议横版 2:1)</label>
+        <label>{{ t('articleForm.cover') }} {{ t('articleForm.coverHint') }}</label>
         <div class="form-content">
           <CommonUpload
               v-model="form.cover"
@@ -185,12 +185,12 @@ onMounted(initData)
               :channelName="currentChannelName"
               :previewUrl="getFullUrl(form.cover, 'article', currentChannelName)"
           />
-          <div class="hint">支持自动分类上传到 Cloudflare R2 (article/{{ currentChannelName }}/)</div>
+          <div class="hint">{{ t('articleForm.uploadHint') }} (article/{{ currentChannelName }}/)</div>
         </div>
       </div>
 
       <div class="form-item">
-        <label>正文内容 <span class="required">*</span></label>
+        <label>{{ t('articleForm.content') }} <span class="required">*</span></label>
         <div class="form-content editor-container">
           <Toolbar
               class="editor-toolbar"
@@ -210,19 +210,19 @@ onMounted(initData)
       </div>
 
       <div class="form-item">
-        <label>显示状态</label>
+        <label>{{ t('articleForm.status') }}</label>
         <div class="form-content radio-group">
           <label class="radio-label">
-            <input type="radio" :value="1" v-model="form.status"/> 显示
+            <input type="radio" :value="1" v-model="form.status"/> {{ t('articleForm.show') }}
           </label>
           <label class="radio-label">
-            <input type="radio" :value="0" v-model="form.status"/> 隐藏
+            <input type="radio" :value="0" v-model="form.status"/> {{ t('articleForm.hide') }}
           </label>
         </div>
       </div>
 
       <div class="footer">
-        <button class="btn-save" @click="onSubmit">提交保存</button>
+        <button class="btn-save" @click="onSubmit">{{ t('articleForm.save') }}</button>
       </div>
     </div>
   </div>

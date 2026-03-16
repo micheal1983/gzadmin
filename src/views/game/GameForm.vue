@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, shallowRef, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// 🌟 1. 确保引入的是 gameApi
+import { useI18n } from 'vue-i18n'
 import { gameApi } from '../../api/baseModel'
 import { channelApi } from '../../api/channel'
 import { parseExtInfo } from '../../utils/format'
@@ -11,19 +11,19 @@ import CommonUpload from '../../components/UploadImage.vue'
 import '@wangeditor/editor/dist/css/style.css'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
-const gameId = route.params.id // 路由参数名
+const gameId = route.params.id
 const isEdit = computed(() => !!gameId)
 
-// 🌟 2. 游戏模型的 ID 是 5
 const MODEL_ID = 5
 
 // === WangEditor 配置 ===
 const editorRef = shallowRef()
 const toolbarConfig = { excludeKeys: ['uploadImage', 'uploadVideo'] }
-const editorConfig = { placeholder: '请输入游戏介绍内容...' }
+const editorConfig = { placeholder: t('gameForm.contentPlaceholder') }
 
 onBeforeUnmount(() => {
   const editor = editorRef.value
@@ -35,7 +35,6 @@ const handleCreated = (editor) => {
   editorRef.value = editor
 }
 
-// 🌟 3. 表单结构：加入游戏特有的推荐和新游字段
 const form = ref({
   title: '',
   channel_id: '',
@@ -52,7 +51,6 @@ const channels = ref([])
 const initData = async () => {
   loading.value = true
   try {
-    // 获取游戏所属的栏目
     const chRes = await channelApi.getList()
     if (chRes && chRes.code === 200) {
       channels.value = chRes.data.filter(c => c.model_id == MODEL_ID)
@@ -64,11 +62,10 @@ const initData = async () => {
     if (!isEdit.value) {
       form.value.author = localStorage.getItem('username') || 'Admin'
     } else {
-      // 🌟 4. 调用 gameApi 获取详情
       const res = await gameApi.getDetail(gameId)
       if (res && res.code === 200) {
         const data = res.data
-        const infoObj = parseExtInfo(data.info) // 使用通用的解析器
+        const infoObj = parseExtInfo(data.info)
 
         form.value = {
           title: data.name,
@@ -83,18 +80,17 @@ const initData = async () => {
       }
     }
   } catch (err) {
-    console.error('初始化失败:', err)
+    console.error(t('gameForm.error.initFailed'), err)
   } finally {
     loading.value = false
   }
 }
 
 const onSubmit = async () => {
-  if (!form.value.title.trim()) return alert('游戏名称不能为空')
-  if (!form.value.channel_id) return alert('请选择所属栏目')
+  if (!form.value.title.trim()) return alert(t('gameForm.validation.nameRequired'))
+  if (!form.value.channel_id) return alert(t('gameForm.validation.channelRequired'))
 
   try {
-    // 🌟 5. 组装 JSON 时包含特殊属性
     const infoJson = JSON.stringify({
       author: form.value.author,
       content: form.value.content,
@@ -118,13 +114,13 @@ const onSubmit = async () => {
     }
 
     if (res.code === 200) {
-      alert('保存成功')
+      alert(t('gameForm.success.save'))
       router.back()
     } else {
-      alert('保存失败: ' + (res.msg || '未知错误'))
+      alert(t('gameForm.error.saveFailed') + (res.msg || t('gameForm.error.unknownError')))
     }
   } catch (err) {
-    alert('请求异常')
+    alert(t('gameForm.error.requestError'))
   }
 }
 
@@ -134,52 +130,52 @@ onMounted(initData)
 <template>
   <div class="article-form">
     <div class="header">
-      <h2>{{ isEdit ? '编辑游戏' : '新增游戏' }}</h2>
-      <button class="btn-back" @click="router.back()">返回列表</button>
+      <h2>{{ isEdit ? t('gameForm.editTitle') : t('gameForm.addTitle') }}</h2>
+      <button class="btn-back" @click="router.back()">{{ t('gameForm.back') }}</button>
     </div>
 
-    <div v-if="loading" class="loading">数据加载中...</div>
+    <div v-if="loading" class="loading">{{ t('gameForm.loading') }}</div>
 
     <div v-else class="form-container">
 
       <div class="form-item">
-        <label>游戏名称 <span class="required">*</span></label>
+        <label>{{ t('gameForm.gameName') }} <span class="required">*</span></label>
         <div class="form-content">
-          <input v-model="form.title" placeholder="请输入游戏名称" />
+          <input v-model="form.title" :placeholder="t('gameForm.namePlaceholder')" />
         </div>
       </div>
 
       <div class="form-item">
-        <label>所属栏目 <span class="required">*</span></label>
+        <label>{{ t('gameForm.channel') }} <span class="required">*</span></label>
         <div class="form-content">
           <select v-model="form.channel_id" class="form-select">
-            <option disabled value="">请选择栏目</option>
+            <option disabled value="">{{ t('gameForm.selectChannel') }}</option>
             <option v-for="c in channels" :key="c.id" :value="c.id">{{ c.remark || c.name }}</option>
           </select>
         </div>
       </div>
 
       <div class="form-item">
-        <label>游戏封面</label>
+        <label>{{ t('gameForm.cover') }}</label>
         <div class="form-content">
           <CommonUpload v-model="form.cover" />
         </div>
       </div>
 
       <div class="form-item">
-        <label>特殊属性</label>
+        <label>{{ t('gameForm.specialAttr') }}</label>
         <div class="form-content checkbox-group">
           <label class="check-label">
-            <input type="checkbox" v-model="form.is_recommend" :true-value="1" :false-value="0" /> 是否推荐
+            <input type="checkbox" v-model="form.is_recommend" :true-value="1" :false-value="0" /> {{ t('gameForm.isRecommend') }}
           </label>
           <label class="check-label">
-            <input type="checkbox" v-model="form.is_new" :true-value="1" :false-value="0" /> 是否新游
+            <input type="checkbox" v-model="form.is_new" :true-value="1" :false-value="0" /> {{ t('gameForm.isNew') }}
           </label>
         </div>
       </div>
 
       <div class="form-item">
-        <label>介绍内容</label>
+        <label>{{ t('gameForm.content') }}</label>
         <div class="form-content editor-container">
           <Toolbar
               class="editor-toolbar"
@@ -199,19 +195,19 @@ onMounted(initData)
       </div>
 
       <div class="form-item">
-        <label>显示状态</label>
+        <label>{{ t('gameForm.status') }}</label>
         <div class="form-content radio-group">
           <label class="radio-label">
-            <input type="radio" :value="1" v-model="form.status" /> 显示
+            <input type="radio" :value="1" v-model="form.status" /> {{ t('gameForm.show') }}
           </label>
           <label class="radio-label">
-            <input type="radio" :value="2" v-model="form.status" /> 隐藏
+            <input type="radio" :value="2" v-model="form.status" /> {{ t('gameForm.hide') }}
           </label>
         </div>
       </div>
 
       <div class="footer">
-        <button class="btn-save" @click="onSubmit">提交保存</button>
+        <button class="btn-save" @click="onSubmit">{{ t('gameForm.save') }}</button>
       </div>
     </div>
   </div>

@@ -1,30 +1,31 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { pictureApi } from '../../api/baseModel.js'
 import { channelApi } from '../../api/channel'
 import CommonUpload from '../../components/UploadImage.vue'
 import { getFullUrl } from '../../utils/format'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const currentId = route.params.id
 const isEdit = computed(() => !!currentId)
 
-const MODEL_ID = 4 // 🌟 修复: 图片库的模型 ID 是 4
+const MODEL_ID = 4
 
 const form = ref({
   title: '',
   channel_id: '',
-  cover: '', // 图片路径
-  url: '',   // (可选) 点击图片要跳转的外链
+  cover: '',
+  url: '',
   status: 1
 })
 
 const channels = ref([])
 
-// 计算当前选中的频道英文名，用于动态拼接图片预览路径
 const currentChannelName = computed(() => {
   if (!channels.value.length || !form.value.channel_id) return 'gallery'
   const ch = channels.value.find(c => c.id === form.value.channel_id)
@@ -55,11 +56,11 @@ const initData = async () => {
             infoObj = parsed
           }
         } catch (e) {
-          console.error('解析 info 失败', e)
+          console.error(t('pictureForm.error.parseError'), e)
         }
 
         form.value = {
-          title: data.name, // 后端叫 name，表单绑定的叫 title
+          title: data.name,
           channel_id: data.channel_id,
           cover: infoObj.cover || '',
           url: infoObj.url || '',
@@ -68,19 +69,18 @@ const initData = async () => {
       }
     }
   } catch (err) {
-    console.error('初始化失败:', err)
+    console.error(t('pictureForm.error.initFailed'), err)
   } finally {
     loading.value = false
   }
 }
 
 const onSubmit = async () => {
-  if (!form.value.title.trim()) return alert('图片标题不能为空')
-  if (!form.value.channel_id) return alert('请选择所属图集')
-  if (!form.value.cover) return alert('请上传图片文件')
+  if (!form.value.title.trim()) return alert(t('pictureForm.validation.titleRequired'))
+  if (!form.value.channel_id) return alert(t('pictureForm.validation.channelRequired'))
+  if (!form.value.cover) return alert(t('pictureForm.validation.coverRequired'))
 
   try {
-    // 组装 info 字段 (图片库通常只需要封面和链接)
     const infoJson = JSON.stringify({
       cover: form.value.cover,
       url: form.value.url
@@ -101,14 +101,14 @@ const onSubmit = async () => {
     }
 
     if (res.code === 200) {
-      alert(isEdit.value ? '修改成功' : '添加成功')
+      alert(isEdit.value ? t('pictureForm.success.edit') : t('pictureForm.success.add'))
       router.back()
     } else {
-      alert(res.msg || '保存失败')
+      alert(res.msg || t('pictureForm.error.saveFailed'))
     }
   } catch (err) {
     console.error(err)
-    alert('请求异常，请检查网络或后端服务')
+    alert(t('pictureForm.error.requestError'))
   }
 }
 
@@ -118,33 +118,33 @@ onMounted(initData)
 <template>
   <div class="picture-form">
     <div class="header">
-      <h2>{{ isEdit ? '编辑图片' : '上传新图' }}</h2>
-      <button class="btn-back" @click="router.back()">返回列表</button>
+      <h2>{{ isEdit ? t('pictureForm.editTitle') : t('pictureForm.addTitle') }}</h2>
+      <button class="btn-back" @click="router.back()">{{ t('pictureForm.back') }}</button>
     </div>
 
-    <div v-if="loading" class="loading">数据加载中...</div>
+    <div v-if="loading" class="loading">{{ t('pictureForm.loading') }}</div>
 
     <div v-else class="form-container">
 
       <div class="form-item">
-        <label>图片标题 <span class="required">*</span></label>
+        <label>{{ t('pictureForm.pictureTitle') }} <span class="required">*</span></label>
         <div class="form-content">
-          <input v-model="form.title" type="text" placeholder="例如：2026年首页轮播图-1"/>
+          <input v-model="form.title" type="text" :placeholder="t('pictureForm.titlePlaceholder')"/>
         </div>
       </div>
 
       <div class="form-item">
-        <label>所属图集分类 <span class="required">*</span></label>
+        <label>{{ t('pictureForm.channel') }} <span class="required">*</span></label>
         <div class="form-content">
           <select v-model="form.channel_id" class="form-select">
-            <option disabled value="">请选择图集</option>
+            <option disabled value="">{{ t('pictureForm.selectChannel') }}</option>
             <option v-for="c in channels" :key="c.id" :value="c.id">{{ c.remark }} ({{ c.name }})</option>
           </select>
         </div>
       </div>
 
       <div class="form-item">
-        <label>高清图片 <span class="required">*</span></label>
+        <label>{{ t('pictureForm.cover') }} <span class="required">*</span></label>
         <div class="form-content upload-container">
           <CommonUpload
               v-model="form.cover"
@@ -152,32 +152,32 @@ onMounted(initData)
               :channelName="currentChannelName"
               :previewUrl="getFullUrl(form.cover, 'picture', currentChannelName)"
           />
-          <div class="hint">支持自动分类上传到 Cloudflare R2 (picture/{{ currentChannelName }}/)</div>
+          <div class="hint">{{ t('pictureForm.uploadHint') }} (picture/{{ currentChannelName }}/)</div>
         </div>
       </div>
 
       <div class="form-item">
-        <label>点击跳转链接 (可选)</label>
+        <label>{{ t('pictureForm.url') }}</label>
         <div class="form-content">
-          <input v-model="form.url" type="text" placeholder="例如: https://example.com"/>
-          <div class="hint">如果图片用于前端轮播展示，用户点击图片时跳转的网址</div>
+          <input v-model="form.url" type="text" :placeholder="t('pictureForm.urlPlaceholder')"/>
+          <div class="hint">{{ t('pictureForm.urlHint') }}</div>
         </div>
       </div>
 
       <div class="form-item">
-        <label>显示状态</label>
+        <label>{{ t('pictureForm.status') }}</label>
         <div class="form-content radio-group">
           <label class="radio-label">
-            <input type="radio" :value="1" v-model="form.status"/> 显示
+            <input type="radio" :value="1" v-model="form.status"/> {{ t('pictureForm.show') }}
           </label>
           <label class="radio-label">
-            <input type="radio" :value="0" v-model="form.status"/> 隐藏
+            <input type="radio" :value="0" v-model="form.status"/> {{ t('pictureForm.hide') }}
           </label>
         </div>
       </div>
 
       <div class="footer">
-        <button class="btn-save" @click="onSubmit">提交保存</button>
+        <button class="btn-save" @click="onSubmit">{{ t('pictureForm.save') }}</button>
       </div>
     </div>
   </div>

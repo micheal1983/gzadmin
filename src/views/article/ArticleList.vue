@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { articleApi } from '../../api/baseModel.js'
 import { channelApi } from '../../api/channel'
 import { getFullUrl } from '../../utils/format'
 
+const { t } = useI18n()
 const router = useRouter()
 const MODEL_ID = 2 // 🌟 修复: 保持和表单一致，文章模型ID通常是1 (你在表单里改成了1)
 
@@ -58,7 +60,7 @@ const getChannelName = (channelId) => {
 // 🌟 修改：原有的 getChannelName 改为获取中文备注
 const getChannelRemark = (channelId) => {
   const channel = channels.value.find(c => c.id == channelId)
-  return channel ? channel.remark : '未分类'
+  return channel ? channel.remark : t('articleList.uncategorized')
 }
 
 const fetchChannels = async () => {
@@ -93,7 +95,7 @@ const fetchArticles = async () => {
       articles.value = res.data?.data || res.data || []
       total.value = res.total || res.data?.total || 0
     } else {
-      alert(res.msg || '获取列表失败')
+      alert(res.msg || t('articleList.fetchListError'))
     }
   } catch (error) {
     console.error('获取文章列表出错:', error)
@@ -122,20 +124,20 @@ const handlePageChange = (page) => {
 }
 
 const handleDelete = async (id) => {
-  if (confirm('确定要删除这篇文章吗？')) {
+  if (confirm(t('articleList.deleteConfirm'))) {
     try {
       const res = await articleApi.del(id)
       if (res.code === 200) {
-        alert('删除成功')
+        alert(t('articleList.deleteSuccess'))
         if (articles.value.length === 1 && currentPage.value > 1) {
           currentPage.value -= 1
         }
         await fetchArticles()
       } else {
-        alert('后端提示：' + res.msg)
+        alert(t('articleList.backendError') + res.msg)
       }
     } catch (error) {
-      alert('删除操作异常')
+      alert(t('articleList.deleteError'))
     }
   }
 }
@@ -162,14 +164,14 @@ onMounted(() => {
 <template>
   <div class="article-list">
     <div class="page-header">
-      <h2>文章管理</h2>
+      <h2>{{ t('articleList.title') }}</h2>
 
       <div class="header-actions">
         <input
             type="text"
             v-model="searchForm.keyword"
             class="search-input"
-            placeholder="搜索文章标题..."
+            :placeholder="t('articleList.searchPlaceholder')"
             @keyup.enter="handleSearch"
         />
 
@@ -178,7 +180,7 @@ onMounted(() => {
             class="channel-select"
             @change="handleSearch"
         >
-          <option value="">全部栏目</option>
+          <option value="">{{ t('articleList.allChannels') }}</option>
           <option
               v-for="channel in channels"
               :key="channel.id"
@@ -188,28 +190,28 @@ onMounted(() => {
           </option>
         </select>
 
-        <button class="btn-search" @click="handleSearch">搜索</button>
-        <button class="btn-reset" @click="handleReset">重置</button>
-        <button class="btn-add" @click="router.push({ name: 'ArticleAdd' })">新增文章</button>
+        <button class="btn-search" @click="handleSearch">{{ t('articleList.search') }}</button>
+        <button class="btn-reset" @click="handleReset">{{ t('articleList.reset') }}</button>
+        <button class="btn-add" @click="router.push({ name: 'ArticleAdd' })">{{ t('articleList.addArticle') }}</button>
       </div>
     </div>
 
     <table class="data-table">
       <thead>
       <tr>
-        <th width="80">ID</th>
-        <th width="120">封面</th>
-        <th>文章标题</th>
-        <th width="120">栏目</th>
-        <th width="100">状态</th>
-        <th width="120">作者</th>
-        <th width="150">发布时间</th>
-        <th width="180">操作</th>
+        <th width="80">{{ t('articleList.id') }}</th>
+        <th width="120">{{ t('articleList.cover') }}</th>
+        <th>{{ t('articleList.articleTitle') }}</th>
+        <th width="120">{{ t('articleList.channel') }}</th>
+        <th width="100">{{ t('articleList.status') }}</th>
+        <th width="120">{{ t('articleList.author') }}</th>
+        <th width="150">{{ t('articleList.publishTime') }}</th>
+        <th width="180">{{ t('articleList.actions') }}</th>
       </tr>
       </thead>
       <tbody>
       <tr v-if="loading">
-        <td colspan="8" class="loading-state">数据加载中...</td>
+        <td colspan="8" class="loading-state">{{ t('articleList.loading') }}</td>
       </tr>
       <template v-else-if="articles?.length > 0">
         <tr v-for="item in articles" :key="item.id">
@@ -222,7 +224,7 @@ onMounted(() => {
                   :src="getFullUrl(parseInfo(item.info).cover, 'article', getChannelName(item.channel_id))"
                   class="cover-img"
               />
-              <div v-else class="cover-placeholder">暂无图片</div>
+              <div v-else class="cover-placeholder">{{ t('articleList.noImage') }}</div>
             </div>
           </td>
 
@@ -232,42 +234,42 @@ onMounted(() => {
           </td>
           <td>
               <span :class="['status-tag', item.status == 1 ? 'status-show' : 'status-hide']">
-                {{ item.status == 1 ? '显示' : '隐藏' }}
+                {{ item.status == 1 ? t('articleList.show') : t('articleList.hide') }}
               </span>
           </td>
           <td style="color: #666;">{{ parseInfo(item.info).author }}</td>
           <td>{{ formatTime(item.create_time) }}</td>
           <td>
             <button class="btn-edit" @click="router.push({ name: 'ArticleEdit', params: { id: item.id } })">
-              编辑
+              {{ t('articleList.edit') }}
             </button>
             <button class="btn-delete" @click="handleDelete(item.id)">
-              删除
+              {{ t('articleList.delete') }}
             </button>
           </td>
         </tr>
       </template>
       <tr v-else>
-        <td colspan="8" class="empty-text">未找到符合条件的文章</td>
+        <td colspan="8" class="empty-text">{{ t('articleList.noArticles') }}</td>
       </tr>
       </tbody>
     </table>
 
     <div class="pagination" v-if="total > 0">
-      <span class="page-info">共 {{ total }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页</span>
+      <span class="page-info">{{ t('articleList.pageInfo', { total, current: currentPage, totalPages }) }}</span>
       <div class="page-buttons">
         <button
             :disabled="currentPage === 1"
             @click="handlePageChange(currentPage - 1)"
         >
-          上一页
+          {{ t('articleList.prevPage') }}
         </button>
 
         <button
             :disabled="currentPage === totalPages"
             @click="handlePageChange(currentPage + 1)"
         >
-          下一页
+          {{ t('articleList.nextPage') }}
         </button>
       </div>
     </div>

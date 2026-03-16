@@ -1,5 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 1. 定义一个响应式的布尔值，默认先不显示
 const isAdmin = ref(false)
@@ -25,65 +28,65 @@ onMounted(() => {
         <li>
           <router-link to="/home" class="item link" active-class="is-active">
             <span class="material-icons">home</span>
-            <span class="text">控制台首页</span>
+            <span class="text">{{ t('sidebar.dashboard') }}</span>
           </router-link>
         </li>
       </ul>
 
       <ul class="module">
-        <li class="item title">游戏管理</li>
+        <li class="item title">{{ t('sidebar.gameManagement') }}</li>
         <li>
           <router-link to="/game-add" class="item link" active-class="is-active">
             <span class="material-icons">add_circle_outline</span>
-            <span class="text">添加游戏</span>
+            <span class="text">{{ t('sidebar.addGame') }}</span>
           </router-link>
         </li>
         <li>
           <router-link to="/game-list" class="item link" active-class="is-active">
             <span class="material-icons">sports_esports</span>
-            <span class="text">游戏列表</span>
+            <span class="text">{{ t('sidebar.gameList') }}</span>
           </router-link>
         </li>
       </ul>
 
       <ul class="module">
-        <li class="item title">文章管理</li>
+        <li class="item title">{{ t('sidebar.articleManagement') }}</li>
         <li>
           <router-link to="/article-add" class="item link" active-class="is-active">
             <span class="material-icons">post_add</span>
-            <span class="text">添加文章</span>
+            <span class="text">{{ t('sidebar.addArticle') }}</span>
           </router-link>
         </li>
         <li>
           <router-link to="/article-list" class="item link" active-class="is-active">
             <span class="material-icons">article</span>
-            <span class="text">文章列表</span>
+            <span class="text">{{ t('sidebar.articleList') }}</span>
           </router-link>
         </li>
       </ul>
 
       <ul class="module">
-        <li class="item title">图片库管理</li>
+        <li class="item title">{{ t('sidebar.galleryManagement') }}</li>
         <li>
           <router-link to="/picture-add" class="item link" active-class="is-active">
             <span class="material-icons">add_photo_alternate</span>
-            <span class="text">上传图片</span>
+            <span class="text">{{ t('sidebar.uploadImage') }}</span>
           </router-link>
         </li>
         <li>
           <router-link to="/picture-list" class="item link" active-class="is-active">
             <span class="material-icons">photo_library</span>
-            <span class="text">图片列表</span>
+            <span class="text">{{ t('sidebar.imageList') }}</span>
           </router-link>
         </li>
       </ul>
 
       <ul class="module">
-        <li class="item title">频道配置</li>
+        <li class="item title">{{ t('sidebar.channelConfig') }}</li>
         <li>
           <router-link to="/channel-list" class="item link" active-class="is-active">
             <span class="material-icons">settings_input_component</span>
-            <span class="text">频道列表</span>
+            <span class="text">{{ t('sidebar.channelList') }}</span>
           </router-link>
         </li>
       </ul>
@@ -91,11 +94,11 @@ onMounted(() => {
 
 
       <ul class="module" v-if="isAdmin">
-        <li class="item title">系统管理</li>
+        <li class="item title">{{ t('sidebar.systemManagement') }}</li>
         <li>
           <router-link to="/user-list" class="item link" active-class="is-active">
             <span class="material-icons">manage_accounts</span>
-            <span class="text">用户与权限</span>
+            <span class="text">{{ t('sidebar.userAndPermissions') }}</span>
           </router-link>
         </li>
       </ul>

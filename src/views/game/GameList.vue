@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {gameApi} from "../../api/baseModel.js";
 import { channelApi } from '../../api/channel'
 import {getFullUrl, parseExtInfo} from '../../utils/format'
 
+const { t } = useI18n()
 const router = useRouter()
-// ... 引入 gameApi 和 parseExtInfo ...
 const MODEL_ID = 5 // 🌟 改为游戏模型的 ID
 const api = gameApi // 🌟 使用游戏 API
 
@@ -53,7 +54,7 @@ const formatTime = (timestamp) => {
 
 const getChannelName = (channelId) => {
   const channel = channels.value.find(c => c.id == channelId)
-  return channel ? channel.name : '未分类'
+  return channel ? channel.name : t('gameList.uncategorized')
 }
 
 const fetchChannels = async () => {
@@ -87,7 +88,7 @@ const fetchArticles = async () => {
       articles.value = res.data
       total.value = res.total || 0
     } else {
-      alert(res.msg || '获取列表失败')
+      alert(res.msg || t('gameList.fetchListError'))
     }
   } catch (error) {
     console.error('获取游戏列表出错:', error)
@@ -116,18 +117,18 @@ const handlePageChange = (page) => {
 }
 
 const handleDelete = async (id) => {
-  if (confirm('确定要删除这个游戏吗？')) {
+  if (confirm(t('gameList.deleteConfirm'))) {
     try {
       // 🌟 核心：这里必须调用 gameApi
       const res = await gameApi.del(id)
       if (res.code === 200) {
-        alert('删除成功')
+        alert(t('gameList.deleteSuccess'))
         await fetchArticles() // 重新加载列表（这里的函数名虽然叫fetchArticles但不影响逻辑）
       } else {
-        alert(res.msg || '删除失败')
+        alert(res.msg || t('gameList.deleteFailed'))
       }
     } catch (error) {
-      alert('删除操作异常')
+      alert(t('gameList.deleteError'))
     }
   }
 }
@@ -154,14 +155,14 @@ onMounted(() => {
 <template>
   <div class="article-list">
     <div class="page-header">
-      <h2>游戏管理</h2>
+      <h2>{{ t('gameList.title') }}</h2>
 
       <div class="header-actions">
         <input
             type="text"
             v-model="searchForm.keyword"
             class="search-input"
-            placeholder="搜索游戏标题..."
+            :placeholder="t('gameList.searchPlaceholder')"
             @keyup.enter="handleSearch"
         />
 
@@ -170,7 +171,7 @@ onMounted(() => {
             class="channel-select"
             @change="handleSearch"
         >
-          <option value="">全部栏目</option>
+          <option value="">{{ t('gameList.allChannels') }}</option>
           <option
               v-for="channel in channels"
               :key="channel.id"
@@ -180,25 +181,25 @@ onMounted(() => {
           </option>
         </select>
 
-        <button class="btn-search" @click="handleSearch">搜索</button>
-        <button class="btn-reset" @click="handleReset">重置</button>
-        <button class="btn-add" @click="router.push({ name: 'GameAdd' })">新增游戏</button>
+        <button class="btn-search" @click="handleSearch">{{ t('gameList.search') }}</button>
+        <button class="btn-reset" @click="handleReset">{{ t('gameList.reset') }}</button>
+        <button class="btn-add" @click="router.push({ name: 'GameAdd' })">{{ t('gameList.addGame') }}</button>
       </div>
     </div>
 
-    <div v-if="loading" class="loading-state">数据加载中...</div>
+    <div v-if="loading" class="loading-state">{{ t('gameList.loading') }}</div>
 
     <table v-else class="data-table">
       <thead>
       <tr>
-        <th width="80">ID</th>
-        <th width="120">封面</th>
-        <th>标题</th>
-        <th width="120">栏目</th>
-        <th width="100">状态</th>
-        <th width="120">操作员</th>
-        <th width="150">发布时间</th>
-        <th width="180">操作</th>
+        <th width="80">{{ t('gameList.id') }}</th>
+        <th width="120">{{ t('gameList.cover') }}</th>
+        <th>{{ t('gameList.gameTitle') }}</th>
+        <th width="120">{{ t('gameList.channel') }}</th>
+        <th width="100">{{ t('gameList.status') }}</th>
+        <th width="120">{{ t('gameList.operator') }}</th>
+        <th width="150">{{ t('gameList.publishTime') }}</th>
+        <th width="180">{{ t('gameList.actions') }}</th>
       </tr>
       </thead>
       <tbody>
@@ -217,7 +218,7 @@ onMounted(() => {
                 :src="getFullUrl(parseExtInfo(item.info).cover)"
                 class="poster-img"
             />
-            <div v-else class="poster-none">暂无海报</div>
+            <div v-else class="poster-none">{{ t('gameList.noPoster') }}</div>
           </div>
         </td>
 
@@ -227,41 +228,41 @@ onMounted(() => {
         </td>
         <td>
             <span :class="['status-tag', item.status == 1 ? 'status-show' : 'status-hide']">
-              {{ item.status == 1 ? '显示' : '隐藏' }}
+              {{ item.status == 1 ? t('gameList.show') : t('gameList.hide') }}
             </span>
         </td>
         <td>{{ parseInfo(item.info).author }}</td>
         <td>{{ formatTime(item.create_time) }}</td>
         <td>
           <button class="btn-edit" @click="router.push({ name: 'GameEdit', params: { id: item.id } })">
-            编辑
+            {{ t('gameList.edit') }}
           </button>
           <button class="btn-delete" @click="handleDelete(item.id)">
-            删除
+            {{ t('gameList.delete') }}
           </button>
         </td>
       </tr>
       <tr v-if="articles.length === 0">
-        <td colspan="8" class="empty-text">未找到符合条件的游戏</td>
+        <td colspan="8" class="empty-text">{{ t('gameList.noGames') }}</td>
       </tr>
       </tbody>
     </table>
 
     <div class="pagination" v-if="total > 0">
-      <span class="page-info">共 {{ total }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页</span>
+      <span class="page-info">{{ t('gameList.pageInfo', { total, current: currentPage, totalPages }) }}</span>
       <div class="page-buttons">
         <button
             :disabled="currentPage === 1"
             @click="handlePageChange(currentPage - 1)"
         >
-          上一页
+          {{ t('gameList.prevPage') }}
         </button>
 
         <button
             :disabled="currentPage === totalPages"
             @click="handlePageChange(currentPage + 1)"
         >
-          下一页
+          {{ t('gameList.nextPage') }}
         </button>
       </div>
     </div>

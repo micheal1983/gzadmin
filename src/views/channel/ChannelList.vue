@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { channelApi } from '../../api/channel'
 
+const { t } = useI18n()
 const list = ref([])
 const models = ref([])
 const loading = ref(true)
@@ -22,7 +24,7 @@ const initData = async () => {
     if (cRes.code === 200) list.value = cRes.data
     if (mRes.code === 200) models.value = mRes.data
   } catch (err) {
-    console.error('加载失败', err)
+    console.error(t('channelList.error.loadFailed'), err)
   } finally {
     loading.value = false
   }
@@ -48,26 +50,26 @@ const onSubmit = async () => {
         : await channelApi.add(form.value)
 
     if (res.code === 200 || (res.msg && res.msg.includes('成功'))) {
-      alert(isEdit.value ? '修改成功' : '添加成功')
+      alert(isEdit.value ? t('channelList.success.edit') : t('channelList.success.add'))
       showModal.value = false
       initData()
     } else {
-      alert('操作未成功: ' + (res.msg || '未知错误'))
+      alert(t('channelList.error.opFailed') + (res.msg || t('channelList.error.unknownError')))
     }
   } catch (err) {
-    alert('提交失败')
+    alert(t('channelList.error.submitFailed'))
   }
 }
 
 const handleDelete = async (id) => {
-  if (!confirm('确定删除该频道吗？')) return
+  if (!confirm(t('channelList.deleteConfirm'))) return
   try {
     const res = await channelApi.delete(id)
     if (res.code === 200 || (res.msg && res.msg.includes('成功'))) {
       initData()
     }
   } catch (err) {
-    alert('请求异常')
+    alert(t('channelList.error.requestError'))
   }
 }
 
@@ -77,23 +79,23 @@ onMounted(initData)
 <template>
   <div class="manage-page">
     <div class="page-header">
-      <h2>频道管理 <small style="color: #999; font-size: 14px; margin-left: 8px;">(Channels)</small></h2>
-      <button class="btn-primary" @click="handleAdd">新建频道</button>
+      <h2>{{ t('channelList.title') }} <small style="color: #999; font-size: 14px; margin-left: 8px;">(Channels)</small></h2>
+      <button class="btn-primary" @click="handleAdd">{{ t('channelList.addChannel') }}</button>
     </div>
 
     <table class="data-table">
       <thead>
       <tr>
-        <th width="80">ID</th>
-        <th>频道名称</th>
-        <th>所属模型</th>
-        <th>备注说明</th>
-        <th width="180">操作</th>
+        <th width="80">{{ t('channelList.id') }}</th>
+        <th>{{ t('channelList.channelName') }}</th>
+        <th>{{ t('channelList.model') }}</th>
+        <th>{{ t('channelList.remark') }}</th>
+        <th width="180">{{ t('channelList.actions') }}</th>
       </tr>
       </thead>
       <tbody>
       <tr v-if="loading">
-        <td colspan="5" class="empty-state">数据加载中...</td>
+        <td colspan="5" class="empty-state">{{ t('channelList.loading') }}</td>
       </tr>
       <template v-else-if="list.length > 0">
         <tr v-for="item in list" :key="item.id">
@@ -101,18 +103,18 @@ onMounted(initData)
           <td><strong>{{ item.name }}</strong></td>
           <td>
               <span class="model-tag">
-                {{ models.find(m => m.id === item.model_id)?.remark || '未知' }}
+                {{ models.find(m => m.id === item.model_id)?.remark || t('channelList.unknown') }}
               </span>
           </td>
           <td style="color: #666;">{{ item.remark || '-' }}</td>
           <td>
-            <button class="btn-edit" @click="handleEdit(item)">编辑</button>
-            <button class="btn-delete" @click="handleDelete(item.id)">删除</button>
+            <button class="btn-edit" @click="handleEdit(item)">{{ t('channelList.edit') }}</button>
+            <button class="btn-delete" @click="handleDelete(item.id)">{{ t('channelList.delete') }}</button>
           </td>
         </tr>
       </template>
       <tr v-else>
-        <td colspan="5" class="empty-state">暂无频道数据</td>
+        <td colspan="5" class="empty-state">{{ t('channelList.noData') }}</td>
       </tr>
       </tbody>
     </table>
@@ -120,30 +122,30 @@ onMounted(initData)
     <div v-if="showModal" class="modal-mask">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ isEdit ? '修改频道' : '新建频道' }}</h3>
+          <h3>{{ isEdit ? t('channelList.editModalTitle') : t('channelList.addModalTitle') }}</h3>
           <span class="close-btn" @click="showModal = false">&times;</span>
         </div>
 
         <div class="modal-body">
           <div class="form-group">
-            <label>频道名称 <span class="required">*</span></label>
-            <input v-model="form.name" placeholder="请输入英文或拼音标识" />
+            <label>{{ t('channelList.nameLabel') }} <span class="required">*</span></label>
+            <input v-model="form.name" :placeholder="t('channelList.namePlaceholder')" />
           </div>
           <div class="form-group">
-            <label>对应模型 <span class="required">*</span></label>
+            <label>{{ t('channelList.modelLabel') }} <span class="required">*</span></label>
             <select v-model="form.model_id">
               <option v-for="m in models" :key="m.id" :value="m.id">{{ m.remark }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>备注描述</label>
-            <textarea v-model="form.remark" rows="3" placeholder="填写该频道的用途描述..."></textarea>
+            <label>{{ t('channelList.remarkLabel') }}</label>
+            <textarea v-model="form.remark" rows="3" :placeholder="t('channelList.remarkPlaceholder')"></textarea>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showModal = false">取消</button>
-          <button class="btn-primary" @click="onSubmit">确认保存</button>
+          <button class="btn-cancel" @click="showModal = false">{{ t('channelList.cancel') }}</button>
+          <button class="btn-primary" @click="onSubmit">{{ t('channelList.save') }}</button>
         </div>
       </div>
     </div>

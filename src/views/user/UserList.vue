@@ -1,18 +1,21 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { userApi } from '../../api/baseModel.js'
 import { channelApi } from '../../api/channel'
 import { getFullUrl } from '../../utils/format'
 
-// 🌟 引入通用上传组件
+// 引入通用上传组件
 import CommonUpload from '../../components/UploadImage.vue'
+
+const { t } = useI18n()
 
 // 写死用户模型 ID
 const MODEL_ID = 3
 
 const list = ref([])
-const allChannels = ref([]) // 🌟 新增：保存完整的频道字典，专门用于列表回显反查1
-const channels = ref([])    // 仅用于表单下拉框（已过滤）
+const allChannels = ref([])
+const channels = ref([])
 const models = ref([])
 const loading = ref(true)
 
@@ -40,14 +43,14 @@ const parseInfo = (info) => {
   }
 }
 
-// 🌟 动态计算当前选中的频道英文名 (使用 allChannels 反查，确保100%能查到)
+// 动态计算当前选中的频道英文名
 const currentChannelName = computed(() => {
   if (!allChannels.value.length || !form.value.channel_id) return 'unknown_channel'
   const ch = allChannels.value.find(c => c.id === form.value.channel_id)
   return ch ? ch.name : 'unknown_channel'
 })
 
-// 🌟 动态获取当前选中的模型英文名 (使用 allChannels 反查)
+// 动态获取当前选中的模型英文名
 const currentModelName = computed(() => {
   if (!allChannels.value.length || !form.value.channel_id) return 'unknown_model'
   const ch = allChannels.value.find(c => c.id === form.value.channel_id)
@@ -69,9 +72,7 @@ const initData = async () => {
     ])
 
     if (cRes.code === 200) {
-      // 🌟 核心修复：备份一个完整的列表用来做字典映射
       allChannels.value = cRes.data
-      // 下拉框专用的过滤列表
       channels.value = cRes.data.filter(c => c.model_id == MODEL_ID)
     }
 
@@ -91,7 +92,7 @@ const handleAdd = () => {
   form.value = {
     name: '',
     password: '',
-    channel_id: channels.value[0]?.id || '', // 默认选中第一个
+    channel_id: channels.value[0]?.id || '',
     status: 1,
     nickname: '',
     remarks: '',
@@ -119,9 +120,9 @@ const handleEdit = (item) => {
 
 // 提交表单
 const onSubmit = async () => {
-  if (!form.value.name) return alert('登录账号不能为空')
-  if (!isEdit.value && !form.value.password) return alert('新建账号必须设置初始密码')
-  if (!form.value.channel_id) return alert('请选择所属分组')
+  if (!form.value.name) return alert(t('userList.validation.nameRequired'))
+  if (!isEdit.value && !form.value.password) return alert(t('userList.validation.passwordRequired'))
+  if (!form.value.channel_id) return alert(t('userList.validation.groupRequired'))
 
   try {
     const infoObj = {
@@ -145,34 +146,33 @@ const onSubmit = async () => {
       showModal.value = false
       initData()
     } else {
-      alert('操作未成功: ' + (res.msg || '未知错误'))
+      alert(t('userList.opFailed') + (res.msg || t('userList.unknownError')))
     }
   } catch (err) {
-    alert('提交失败')
+    alert(t('userList.submitFailed'))
   }
 }
 
 // 删除数据
 const handleDelete = async (id) => {
-  if (!confirm('确定删除该账号吗？此操作不可逆！')) return
+  if (!confirm(t('userList.deleteConfirm'))) return
   try {
     const res = await userApi.del(id)
     if (res.code === 200 || (res.msg && res.msg.includes('成功'))) {
       initData()
     } else {
-      alert(res.msg || '删除失败')
+      alert(res.msg || t('userList.deleteFailed'))
     }
   } catch (err) {
-    alert('请求异常')
+    alert(t('userList.requestError'))
   }
 }
 
-// 🌟 列表获取头像真实路径：使用 allChannels 查全量字典
+// 列表获取头像真实路径
 const getListAvatarUrl = (item) => {
   const cover = parseInfo(item.info).cover
   if(!cover) return '/default-avatar.png';
 
-  // 即使被 filter 过滤掉了，在 allChannels 里也绝对找得到真实数据
   const channel = allChannels.value.find(c => c.id == item.channel_id)
   const channelName = channel ? channel.name : 'unknown_channel'
 
@@ -188,25 +188,25 @@ onMounted(initData)
 <template>
   <div class="manage-page">
     <div class="page-header">
-      <h2>账号管理 <small style="color: #999; font-size: 14px; margin-left: 8px;">(Users)</small></h2>
-      <button class="btn-primary" @click="handleAdd">新建账号</button>
+      <h2>{{ t('userList.manageTitle') }}</h2>
+      <button class="btn-primary" @click="handleAdd">{{ t('userList.addAccount') }}</button>
     </div>
 
     <table class="data-table">
       <thead>
       <tr>
-        <th width="80">ID</th>
-        <th width="60">头像</th>
-        <th>登录账号</th>
-        <th>用户昵称</th>
-        <th>所属分组</th>
-        <th>状态</th>
-        <th width="180">操作</th>
+        <th width="80">{{ t('userList.id') }}</th>
+        <th width="60">{{ t('userList.avatar') }}</th>
+        <th>{{ t('userList.loginAccount') }}</th>
+        <th>{{ t('userList.nickname') }}</th>
+        <th>{{ t('userList.group') }}</th>
+        <th>{{ t('userList.status') }}</th>
+        <th width="180">{{ t('userList.actions') }}</th>
       </tr>
       </thead>
       <tbody>
       <tr v-if="loading">
-        <td colspan="7" class="empty-state">数据加载中...</td>
+        <td colspan="7" class="empty-state">{{ t('userList.loading') }}</td>
       </tr>
       <template v-else-if="list.length > 0">
         <tr v-for="item in list" :key="item.id">
@@ -218,22 +218,22 @@ onMounted(initData)
           <td>{{ parseInfo(item.info).nickname || '-' }}</td>
           <td>
             <span class="model-tag">
-              {{ allChannels.find(c => c.id === item.channel_id)?.remark || '未分配' }}
+              {{ allChannels.find(c => c.id === item.channel_id)?.remark || t('userList.unassigned') }}
             </span>
           </td>
           <td>
             <span :class="['status-tag', item.status == 1 ? 'status-active' : 'status-inactive']">
-              {{ item.status == 1 ? '启用' : '禁用' }}
+              {{ item.status == 1 ? t('userList.active') : t('userList.inactive') }}
             </span>
           </td>
           <td>
-            <button class="btn-edit" @click="handleEdit(item)">编辑</button>
-            <button class="btn-delete" @click="handleDelete(item.id)" :disabled="item.channel_id == 1">删除</button>
+            <button class="btn-edit" @click="handleEdit(item)">{{ t('userList.edit') }}</button>
+            <button class="btn-delete" @click="handleDelete(item.id)" :disabled="item.channel_id == 1">{{ t('userList.delete') }}</button>
           </td>
         </tr>
       </template>
       <tr v-else>
-        <td colspan="7" class="empty-state">暂无账号数据</td>
+        <td colspan="7" class="empty-state">{{ t('userList.noData') }}</td>
       </tr>
       </tbody>
     </table>
@@ -241,7 +241,7 @@ onMounted(initData)
     <div v-if="showModal" class="modal-mask">
       <div class="modal-content" style="width: 500px;">
         <div class="modal-header">
-          <h3>{{ isEdit ? '修改账号' : '新建账号' }}</h3>
+          <h3>{{ isEdit ? t('userList.editAccount') : t('userList.newAccount') }}</h3>
           <span class="close-btn" @click="showModal = false">&times;</span>
         </div>
 
@@ -258,22 +258,22 @@ onMounted(initData)
 
           <div class="form-row">
             <div class="form-group half">
-              <label>登录账号 <span class="required">*</span></label>
-              <input v-model="form.name" placeholder="英文或拼音" :disabled="isEdit" />
+              <label>{{ t('userList.loginAccount') }} <span class="required">*</span></label>
+              <input v-model="form.name" :placeholder="t('userList.loginAccountPlaceholder')" :disabled="isEdit" />
             </div>
             <div class="form-group half">
-              <label>登录密码 <span v-if="!isEdit" class="required">*</span></label>
-              <input v-model="form.password" type="password" :placeholder="isEdit ? '不修改留空' : '设置初始密码'" />
+              <label>{{ t('userList.password') }} <span v-if="!isEdit" class="required">*</span></label>
+              <input v-model="form.password" type="password" :placeholder="isEdit ? t('userList.passwordEditPlaceholder') : t('userList.passwordNewPlaceholder')" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group half">
-              <label>用户昵称</label>
-              <input v-model="form.nickname" placeholder="展示名称" />
+              <label>{{ t('userList.nickname') }}</label>
+              <input v-model="form.nickname" :placeholder="t('userList.nicknamePlaceholder')" />
             </div>
             <div class="form-group half">
-              <label>所属分组 <span class="required">*</span></label>
+              <label>{{ t('userList.group') }} <span class="required">*</span></label>
               <select v-model="form.channel_id">
                 <option v-for="c in channels" :key="c.id" :value="c.id">{{ c.remark }}</option>
               </select>
@@ -281,22 +281,22 @@ onMounted(initData)
           </div>
 
           <div class="form-group">
-            <label>备注描述</label>
-            <textarea v-model="form.remarks" rows="2" placeholder="填写该账号的备注信息..."></textarea>
+            <label>{{ t('userList.remarks') }}</label>
+            <textarea v-model="form.remarks" rows="2" :placeholder="t('userList.remarksPlaceholder')"></textarea>
           </div>
 
           <div class="form-group">
-            <label>账号状态</label>
+            <label>{{ t('userList.accountStatus') }}</label>
             <div class="radio-group">
-              <label><input type="radio" :value="1" v-model="form.status" /> 正常启用</label>
-              <label style="margin-left: 15px;"><input type="radio" :value="0" v-model="form.status" /> 锁定禁用</label>
+              <label><input type="radio" :value="1" v-model="form.status" /> {{ t('userList.statusActive') }}</label>
+              <label style="margin-left: 15px;"><input type="radio" :value="0" v-model="form.status" /> {{ t('userList.statusInactive') }}</label>
             </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button class="btn-cancel" @click="showModal = false">取消</button>
-          <button class="btn-primary" @click="onSubmit">确认保存</button>
+          <button class="btn-cancel" @click="showModal = false">{{ t('userList.cancel') }}</button>
+          <button class="btn-primary" @click="onSubmit">{{ t('userList.save') }}</button>
         </div>
       </div>
     </div>

@@ -1,14 +1,15 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
-// 🌟 引入我们之前定义的 API 地址配置
 import { API_BASE_URL } from '../utils/format'
 
+const { t } = useI18n()
 const router = useRouter()
-const loading = ref(false) // 登录状态锁定
-const message = ref({ type: '', text: '' }) // 提示信息区域
+const loading = ref(false)
+const message = ref({ type: '', text: '' })
 
 const form = reactive({
   username: '',
@@ -16,48 +17,42 @@ const form = reactive({
 })
 
 const onSubmit = async () => {
-  if (loading.value) return // 防止重复点击
+  if (loading.value) return
 
   if (!form.username || !form.password) {
-    message.value = { type: 'error', text: '请填写完整的账号和密码' }
+    message.value = { type: 'error', text: t('login.error.fillForm') }
     return
   }
 
   loading.value = true
-  message.value = { type: 'info', text: '正在验证身份，请稍候...' }
+  message.value = { type: 'info', text: t('login.validating') }
 
   try {
-    // 使用统一的 API 地址
     const res = await axios.post(`${API_BASE_URL}user/login`, form)
 
     if (res.data.code === 200) {
-      //获取token
       localStorage.setItem('token', res.data.data.token)
       localStorage.setItem('username', form.username)
 
-      //解析token
       const decoded = jwtDecode(localStorage.getItem('token'))
       localStorage.setItem('userinfo', JSON.stringify(decoded.data))
 
-      message.value = {type: 'success', text: '登录成功！正在进入系统...'}
+      message.value = {type: 'success', text: t('login.loginSuccess')}
 
       setTimeout(() => {
         router.push('/home')
       }, 1000)
     } else {
       loading.value = false
-      message.value = {type: 'error', text: res.data.msg || '登录失败，请检查账号密码'}
+      message.value = {type: 'error', text: res.data.msg || t('login.error.wrongCredentials')}
     }
   } catch (error) {
     loading.value = false
 
-    // 🌟 核心修复：捕获 Axios 的详细错误响应
     if (error.response && error.response.data && error.response.data.msg) {
-      // 如果后端传回了具体的 msg（例如：401 账号或密码错误），就显示后端的提示
       message.value = {type: 'error', text: error.response.data.msg}
     } else {
-      // 只有在真的断网、服务器宕机（没有 response 时），才显示这句兜底的话
-      message.value = {type: 'error', text: '服务器响应异常，请联系管理员'}
+      message.value = {type: 'error', text: t('login.error.serverError')}
     }
   }
 }
@@ -71,7 +66,7 @@ const onSubmit = async () => {
           <span class="material-icons">security</span>
         </div>
         <h2>GAMEZONE</h2>
-        <p>系统管理后台</p>
+        <p>{{ t('login.title') }}</p>
       </div>
 
       <div v-if="message.text" :class="['message-box', message.type]">
@@ -85,7 +80,7 @@ const onSubmit = async () => {
           <input
               v-model="form.username"
               type="text"
-              placeholder="用户名"
+              :placeholder="t('login.usernamePlaceholder')"
               :disabled="loading"
           />
         </div>
@@ -95,7 +90,7 @@ const onSubmit = async () => {
           <input
               v-model="form.password"
               type="password"
-              placeholder="密码"
+              :placeholder="t('login.passwordPlaceholder')"
               :disabled="loading"
               @keyup.enter="onSubmit"
           />
@@ -106,10 +101,10 @@ const onSubmit = async () => {
             @click="onSubmit"
             :disabled="loading"
         >
-          <template v-if="!loading">登录系统</template>
+          <template v-if="!loading">{{ t('login.loginButton') }}</template>
           <template v-else>
             <span class="spinner"></span>
-            验证中...
+            {{ t('login.loggingIn') }}
           </template>
         </button>
       </div>

@@ -1,27 +1,15 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
-import { jwtDecode } from 'jwt-decode'
+import { useI18n } from 'vue-i18n'
 
 const userInfo = ref(null)
-const channel_id = ref(null)
 const router = useRouter()
+const { t, locale } = useI18n()
 
 onMounted(() => {
   console.log(localStorage.getItem('userinfo'))
   userInfo.value = JSON.parse(localStorage.getItem('userinfo'))
-
-  const token = localStorage.getItem('token')
-  // if (token) {
-  //   try {
-  //     const decoded = jwtDecode(token)
-  //     userInfo.value = decoded.data
-  //     console.log(userInfo.value.channel_id)
-  //
-  //   } catch (error) {
-  //     console.error('Token 解析失败：', error)
-  //   }
-  // }
 })
 
 const handleLogout = () => {
@@ -29,18 +17,31 @@ const handleLogout = () => {
   localStorage.removeItem('username')
   router.push('/login')
 }
+
+const toggleLanguage = (event) => {
+  const selectedLang = event.target.value
+  locale.value = selectedLang
+  localStorage.setItem('lang', selectedLang)
+}
 </script>
 
 <template>
   <header class="top-header">
     <div class="right-user">
+      <div class="language-switch">
+        <select @change="toggleLanguage" :value="locale">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
       <template v-if="userInfo">
         <div class="user-profile">
           <div class="avatar">
             {{ userInfo.username ? userInfo.username.charAt(0).toUpperCase() : 'U' }}
           </div>
           <span class="welcome-text">
-            欢迎回来，<strong>{{ userInfo.username }}</strong>
+            {{ t('topbar.welcome') }}，<strong>{{ userInfo.username }}</strong>
           </span>
           <span class="user-id">ID: {{ userInfo.uid }}</span>
         </div>
@@ -48,7 +49,7 @@ const handleLogout = () => {
 
         <div class="logout-btn" @click="handleLogout">
           <span class="material-icons">logout</span>
-          <span class="logout-text">退出登录</span>
+          <span class="logout-text">{{ t('topbar.logout') }}</span>
         </div>
       </template>
       <div v-else class="loading-user">
@@ -63,13 +64,10 @@ const handleLogout = () => {
   height: 64px;
   background: #ffffff;
   display: flex;
-  /* 🌟 核心修复：改为 flex-end，让内容自然靠右，不再产生奇怪的中间空白 */
   justify-content: flex-end;
   align-items: center;
-  /* 🌟 设置为你要求的右边距 50px */
   border-bottom: 1px solid #f0f2f5;
   box-sizing: border-box;
-  /* 🌟 确保不受全局 center 影响 */
   text-align: left;
 }
 
@@ -77,6 +75,14 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.language-switch select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  outline: none;
+  cursor: pointer;
 }
 
 .user-profile {

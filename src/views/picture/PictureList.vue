@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { pictureApi } from '../../api/baseModel.js'
 import { channelApi } from '../../api/channel'
 import { getFullUrl } from '../../utils/format'
 
+const { t } = useI18n()
 const router = useRouter()
 const MODEL_ID = 4 // 🌟 修复: 图片模型 ID 是 4
 
@@ -57,7 +59,7 @@ const getChannelName = (channelId) => {
 
 const getChannelRemark = (channelId) => {
   const channel = channels.value.find(c => c.id == channelId)
-  return channel ? channel.remark : '未分类'
+  return channel ? channel.remark : t('pictureList.uncategorized')
 }
 
 const fetchChannels = async () => {
@@ -91,7 +93,7 @@ const fetchPictures = async () => {
       pictures.value = res.data?.data || res.data || []
       total.value = res.total || res.data?.total || 0
     } else {
-      alert(res.msg || '获取列表失败')
+      alert(res.msg || t('pictureList.fetchListError'))
     }
   } catch (error) {
     console.error('获取图片列表出错:', error)
@@ -120,7 +122,7 @@ const handlePageChange = (page) => {
 }
 
 const handleDelete = async (id) => {
-  if (confirm('确定要删除这张图片吗？')) {
+  if (confirm(t('pictureList.deleteConfirm'))) {
     try {
       const res = await pictureApi.del(id)
       if (res.code === 200) {
@@ -129,10 +131,10 @@ const handleDelete = async (id) => {
         }
         await fetchPictures()
       } else {
-        alert('后端提示：' + res.msg)
+        alert(t('pictureList.backendError') + res.msg)
       }
     } catch (error) {
-      alert('删除操作异常')
+      alert(t('pictureList.deleteError'))
     }
   }
 }
@@ -159,14 +161,14 @@ onMounted(() => {
 <template>
   <div class="picture-list">
     <div class="page-header">
-      <h2>图片库管理</h2>
+      <h2>{{ t('pictureList.title') }}</h2>
 
       <div class="header-actions">
         <input
             type="text"
             v-model="searchForm.keyword"
             class="search-input"
-            placeholder="搜索图片标题..."
+            :placeholder="t('pictureList.searchPlaceholder')"
             @keyup.enter="handleSearch"
         />
 
@@ -175,7 +177,7 @@ onMounted(() => {
             class="channel-select"
             @change="handleSearch"
         >
-          <option value="">全部图集</option>
+          <option value="">{{ t('pictureList.allChannels') }}</option>
           <option
               v-for="channel in channels"
               :key="channel.id"
@@ -185,27 +187,27 @@ onMounted(() => {
           </option>
         </select>
 
-        <button class="btn-search" @click="handleSearch">搜索</button>
-        <button class="btn-reset" @click="handleReset">重置</button>
-        <button class="btn-add" @click="router.push({ name: 'PictureAdd' })">新增图片</button>
+        <button class="btn-search" @click="handleSearch">{{ t('pictureList.search') }}</button>
+        <button class="btn-reset" @click="handleReset">{{ t('pictureList.reset') }}</button>
+        <button class="btn-add" @click="router.push({ name: 'PictureAdd' })">{{ t('pictureList.addPicture') }}</button>
       </div>
     </div>
 
     <table class="data-table">
       <thead>
       <tr>
-        <th width="80">ID</th>
-        <th width="160">图片预览</th>
-        <th>图片标题</th>
-        <th width="120">所属图集</th>
-        <th width="100">状态</th>
-        <th width="150">上传时间</th>
-        <th width="180">操作</th>
+        <th width="80">{{ t('pictureList.id') }}</th>
+        <th width="160">{{ t('pictureList.preview') }}</th>
+        <th>{{ t('pictureList.pictureTitle') }}</th>
+        <th width="120">{{ t('pictureList.channel') }}</th>
+        <th width="100">{{ t('pictureList.status') }}</th>
+        <th width="150">{{ t('pictureList.uploadTime') }}</th>
+        <th width="180">{{ t('pictureList.actions') }}</th>
       </tr>
       </thead>
       <tbody>
       <tr v-if="loading">
-        <td colspan="7" class="loading-state">数据加载中...</td>
+        <td colspan="7" class="loading-state">{{ t('pictureList.loading') }}</td>
       </tr>
       <template v-else-if="pictures?.length > 0">
         <tr v-for="item in pictures" :key="item.id">
@@ -218,7 +220,7 @@ onMounted(() => {
                   :src="getFullUrl(parseInfo(item.info).cover, 'picture', getChannelName(item.channel_id))"
                   class="cover-img"
               />
-              <div v-else class="cover-placeholder">暂无图片</div>
+              <div v-else class="cover-placeholder">{{ t('pictureList.noImage') }}</div>
             </div>
           </td>
 
@@ -228,41 +230,41 @@ onMounted(() => {
           </td>
           <td>
               <span :class="['status-tag', item.status == 1 ? 'status-show' : 'status-hide']">
-                {{ item.status == 1 ? '显示' : '隐藏' }}
+                {{ item.status == 1 ? t('pictureList.show') : t('pictureList.hide') }}
               </span>
           </td>
           <td>{{ formatTime(item.create_time) }}</td>
           <td>
             <button class="btn-edit" @click="router.push({ name: 'PictureEdit', params: { id: item.id } })">
-              编辑
+              {{ t('pictureList.edit') }}
             </button>
             <button class="btn-delete" @click="handleDelete(item.id)">
-              删除
+              {{ t('pictureList.delete') }}
             </button>
           </td>
         </tr>
       </template>
       <tr v-else>
-        <td colspan="7" class="empty-text">未找到符合条件的图片</td>
+        <td colspan="7" class="empty-text">{{ t('pictureList.noPictures') }}</td>
       </tr>
       </tbody>
     </table>
 
     <div class="pagination" v-if="total > 0">
-      <span class="page-info">共 {{ total }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页</span>
+      <span class="page-info">{{ t('pictureList.pageInfo', { total, current: currentPage, totalPages }) }}</span>
       <div class="page-buttons">
         <button
             :disabled="currentPage === 1"
             @click="handlePageChange(currentPage - 1)"
         >
-          上一页
+          {{ t('pictureList.prevPage') }}
         </button>
 
         <button
             :disabled="currentPage === totalPages"
             @click="handlePageChange(currentPage + 1)"
         >
-          下一页
+          {{ t('pictureList.nextPage') }}
         </button>
       </div>
     </div>
