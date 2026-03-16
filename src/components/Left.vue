@@ -81,7 +81,7 @@ onMounted(() => {
         </li>
       </ul>
 
-      <ul class="module">
+      <ul class="module" v-if="isAdmin">
         <li class="item title">{{ t('sidebar.channelConfig') }}</li>
         <li>
           <router-link to="/channel-list" class="item link" active-class="is-active">
