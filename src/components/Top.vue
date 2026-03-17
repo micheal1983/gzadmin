@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getFullUrl } from '../utils/format'
 
 const userInfo = ref(null)
 const router = useRouter()
@@ -38,7 +39,8 @@ const toggleLanguage = (event) => {
       <template v-if="userInfo">
         <div class="user-profile">
           <div class="avatar">
-            {{ userInfo.username ? userInfo.username.charAt(0).toUpperCase() : 'U' }}
+            <img v-if="userInfo.cover" :src="getFullUrl(userInfo.cover, 'User', userInfo.channel_id === 1 ? 'admin' : 'member')" alt="avatar" class="avatar-img" />
+            <span v-else>{{ userInfo.username ? userInfo.username.charAt(0).toUpperCase() : 'U' }}</span>
           </div>
           <span class="welcome-text">
             {{ t('topbar.welcome') }}，<strong>{{ userInfo.username }}</strong>
@@ -96,12 +98,19 @@ const toggleLanguage = (event) => {
   height: 26px;
   background: #535bf2;
   color: #fff;
-  border-radius: 6px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 12px;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .welcome-text { font-size: 13px; color: #213547; }
